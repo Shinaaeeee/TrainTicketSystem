@@ -1,13 +1,16 @@
 using Microsoft.EntityFrameworkCore;
 using TrainTicketSystem.Models;
+using TrainTicketSystem.Service;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddRazorPages();
+builder.Services.AddSession();
 builder.Services.AddDbContext<TrainTicketDbContext>(options =>
     options.UseSqlServer(
         builder.Configuration.GetConnectionString("MyCnn")));
+builder.Services.AddScoped<UserSession>();
 
 var app = builder.Build();
 
@@ -23,7 +26,7 @@ app.UseHttpsRedirection();
 app.UseStaticFiles();
 
 app.UseRouting();
-
+app.UseSession();
 app.UseAuthorization();
 
 app.MapRazorPages();

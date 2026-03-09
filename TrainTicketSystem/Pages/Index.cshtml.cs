@@ -12,9 +12,16 @@ namespace TrainTicketSystem.Pages
             _logger = logger;
         }
 
-        public void OnGet()
+        public IActionResult OnGet()
         {
+            var username = HttpContext.Session.GetString("Username");
 
+            if (username == null)
+            {
+                return RedirectToPage("/Login");
+            }
+
+            return Page();
         }
     }
 }
