@@ -1,0 +1,146 @@
+﻿@page
+@model YourApp.Pages.Seats.IndexModel
+@{
+    ViewData["Title"] = "Manage Seats";
+}
+
+<div class="container-fluid mt-4">
+
+    
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="mb-0">
+            <i class="bi bi-train-front me-2"></i>Manage Seats
+        </h2>
+        <a asp-page="./Create" class="btn btn-success">
+            <i class="bi bi-plus-circle me-1"></i> Add New Seat
+        </a>
+    </div>
+
+    
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="mb-3">
+            <span style="color:red;"><em>@TempData["ErrorMessage"]</em></span>
+        </div>
+    }
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            @TempData["SuccessMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    
+    <div class="card shadow-sm mb-4">
+        <div class="card-header bg-light fw-semibold">
+            <i class="bi bi-funnel me-1"></i> Filter Seats
+        </div>
+        <div class="card-body">
+            <form method="get" class="row g-3 align-items-end">
+
+                <div class="col-md-4">
+                    <label for="FilterTrainId" class="form-label">Train</label>
+                    <select id="FilterTrainId"
+                            name="FilterTrainId"
+                            class="form-select"
+                            asp-items="Model.TrainOptions">
+                        <option value="">-- All Trains --</option>
+                    </select>
+                </div>
+
+                <div class="col-md-4">
+                    <label for="FilterSeatTypeId" class="form-label">Seat Type</label>
+                    <select id="FilterSeatTypeId"
+                            name="FilterSeatTypeId"
+                            class="form-select"
+                            asp-items="Model.SeatTypeOptions">
+                        <option value="">-- All Seat Types --</option>
+                    </select>
+                </div>
+
+                <div class="col-md-4 d-flex gap-2">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-search me-1"></i> Search / Filter
+                    </button>
+                    <a asp-page="./Index" class="btn btn-outline-secondary">
+                        <i class="bi bi-x-circle me-1"></i> Clear
+                    </a>
+                </div>
+
+            </form>
+        </div>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-body p-0">
+            @if (!Model.Seats.Any())
+            {
+                <div class="text-center py-5 text-muted">
+                    <i class="bi bi-inbox fs-1 d-block mb-2"></i>
+                    No seats found matching the selected filters.
+                </div>
+            }
+            else
+            {
+                <div class="table-responsive">
+                    <table class="table table-hover table-striped mb-0 align-middle">
+                        <thead class="table-dark">
+                            <tr>
+                                <th scope="col">Seat ID</th>
+                                <th scope="col">Train Name</th>
+                                <th scope="col">Seat Number</th>
+                                <th scope="col">Seat Type</th>
+                                <th scope="col">Price Multiplier</th>
+                                <th scope="col" class="text-center">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+    @{ var i = 1; }
+    @foreach (var seat in Model.Seats)
+    {
+        <tr>
+            <td><span class="badge bg-secondary">@seat.SeatId</span></td>
+            <td>@seat.TrainName</td>
+            <td><code>@seat.SeatNumber</code></td>
+            <td>@seat.TypeName</td>
+            <td>
+                <span class="badge bg-info text-dark">
+                    @(seat.PriceMultiplier.ToString("0.00"))
+                </span>
+            </td>
+            <td class="text-center">
+                <a asp-page="./Edit"
+                   asp-route-id="@seat.SeatId"
+                   class="btn btn-sm btn-outline-primary me-1">
+                    <i class="bi bi-pencil-square"></i> Edit
+                </a>
+                <a asp-page="./Delete"
+                   asp-route-id="@seat.SeatId"
+                   class="btn btn-sm btn-outline-danger">
+                    <i class="bi bi-trash3"></i> Delete
+                </a>
+            </td>
+        </tr>
+    }
+</tbody>
+                    </table>
+                </div>
+
+                <div class="px-3 py-2 border-top text-muted small">
+                    Showing <strong>@Model.Seats.Count</strong> seat(s)
+                    @if (Model.FilterTrainId.HasValue || Model.FilterSeatTypeId.HasValue)
+                    {
+                        <span>— filtered results</span>
+                    }
+                </div>
+            }
+        </div>
+    </div>
+
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}
