@@ -1,0 +1,147 @@
+﻿@page "/Admin"
+@model TrainTicketSystem.Pages.Admin.IndexModel
+@{
+    ViewData["Title"] = "Admin Dashboard";
+    Layout = "~/Pages/Shared/_AdminLayout.cshtml"; // Sử dụng layout Admin đã tạo
+}
+
+<div class="mb-8">
+    <h1 class="text-3xl font-bold text-slate-900">Overview</h1>
+    <p class="text-slate-600 mt-2">Welcome to VNR Train Ticket Booking System Admin Dashboard</p>
+</div>
+
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+    <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 hover:shadow-md transition-shadow">
+        <div class="flex items-start justify-between">
+            <div>
+                <p class="text-slate-600 text-sm font-medium">Total Users</p>
+                <p class="text-slate-900 text-3xl font-bold mt-2">@Model.TotalUsers.ToString("N0")</p>
+            </div>
+            <div class="bg-blue-100 p-3 rounded-lg">
+                <i data-lucide="users" class="text-blue-600 w-6 h-6"></i>
+            </div>
+        </div>
+    </div>
+
+    <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 hover:shadow-md transition-shadow">
+        <div class="flex items-start justify-between">
+            <div>
+                <p class="text-slate-600 text-sm font-medium">Active Trains</p>
+                <p class="text-slate-900 text-3xl font-bold mt-2">@Model.TotalTrains.ToString("N0")</p>
+            </div>
+            <div class="bg-green-100 p-3 rounded-lg">
+                <i data-lucide="train" class="text-green-600 w-6 h-6"></i>
+            </div>
+        </div>
+    </div>
+
+    <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 hover:shadow-md transition-shadow">
+        <div class="flex items-start justify-between">
+            <div>
+                <p class="text-slate-600 text-sm font-medium">Routes</p>
+                <p class="text-slate-900 text-3xl font-bold mt-2">@Model.TotalRoutes.ToString("N0")</p>
+            </div>
+            <div class="bg-purple-100 p-3 rounded-lg">
+                <i data-lucide="map-pin" class="text-purple-600 w-6 h-6"></i>
+            </div>
+        </div>
+    </div>
+
+    <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 hover:shadow-md transition-shadow">
+        <div class="flex items-start justify-between">
+            <div>
+                <p class="text-slate-600 text-sm font-medium">Schedules</p>
+                <p class="text-slate-900 text-3xl font-bold mt-2">@Model.TotalSchedules.ToString("N0")</p>
+            </div>
+            <div class="bg-amber-100 p-3 rounded-lg">
+                <i data-lucide="calendar" class="text-amber-600 w-6 h-6"></i>
+            </div>
+        </div>
+    </div>
+
+    <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 hover:shadow-md transition-shadow">
+        <div class="flex items-start justify-between">
+            <div>
+                <p class="text-slate-600 text-sm font-medium">Available Seats</p>
+                <p class="text-slate-900 text-3xl font-bold mt-2">@Model.TotalSeats.ToString("N0")</p>
+            </div>
+            <div class="bg-pink-100 p-3 rounded-lg">
+                <i data-lucide="armchair" class="text-pink-600 w-6 h-6"></i>
+            </div>
+        </div>
+    </div>
+
+    <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 hover:shadow-md transition-shadow">
+        <div class="flex items-start justify-between">
+            <div>
+                <p class="text-slate-600 text-sm font-medium">Tickets Sold</p>
+                <p class="text-slate-900 text-3xl font-bold mt-2">@Model.TotalTickets.ToString("N0")</p>
+            </div>
+            <div class="bg-cyan-100 p-3 rounded-lg">
+                <i data-lucide="ticket" class="text-cyan-600 w-6 h-6"></i>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+        <h2 class="text-lg font-bold text-slate-900 mb-4">Recent Bookings</h2>
+        <div class="space-y-4">
+            @if (Model.RecentBookings.Any())
+            {
+                @foreach (var booking in Model.RecentBookings)
+                {
+                    <div class="flex items-center justify-between py-3 border-b border-slate-100 last:border-0">
+                        <div>
+                            <p class="font-medium text-slate-900">@booking.CustomerName</p>
+                            <p class="text-sm text-slate-600">@booking.RouteInfo</p>
+                        </div>
+                        <p class="text-xs text-slate-500">@booking.TimeAgo</p>
+                    </div>
+                }
+            }
+            else
+            {
+                <p class="text-sm text-slate-500">No recent bookings found.</p>
+            }
+        </div>
+    </div>
+
+    <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+        <h2 class="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2">
+            <i data-lucide="trending-up" class="text-green-600 w-5 h-5"></i>
+            System Performance
+        </h2>
+        <div class="space-y-4">
+            <div class="flex items-center justify-between py-3 border-b border-slate-100">
+                <div>
+                    <p class="font-medium text-slate-900">System Uptime</p>
+                    <p class="text-xs text-green-600">Excellent</p>
+                </div>
+                <p class="font-semibold text-slate-900">99.8%</p>
+            </div>
+            <div class="flex items-center justify-between py-3 border-b border-slate-100">
+                <div>
+                    <p class="font-medium text-slate-900">Average Response Time</p>
+                    <p class="text-xs text-green-600">Good</p>
+                </div>
+                <p class="font-semibold text-slate-900">245ms</p>
+            </div>
+            <div class="flex items-center justify-between py-3 border-b border-slate-100">
+                <div>
+                    <p class="font-medium text-slate-900">Database Load</p>
+                    <p class="text-xs text-green-600">Healthy</p>
+                </div>
+                <p class="font-semibold text-slate-900">35%</p>
+            </div>
+            <div class="flex items-center justify-between py-3">
+                <div>
+                    <p class="font-medium text-slate-900">Server CPU</p>
+                    <p class="text-xs text-green-600">Normal</p>
+                </div>
+                <p class="font-semibold text-slate-900">42%</p>
+            </div>
+        </div>
+    </div>
+</div>
