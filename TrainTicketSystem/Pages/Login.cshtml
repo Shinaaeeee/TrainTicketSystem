@@ -44,7 +44,20 @@
                     </form>
 
                     <p class="text-danger mt-3">@Model.Message</p>
+                    <p class="text-danger mt-3">@Model.Message</p>
 
+                    <div class="text-center mt-3">
+                        Don't have an account?
+                        <a href="/Register" class="fw-bold text-decoration-none">
+                            Register
+                        </a>
+                    </div>
+                    @if (TempData["SuccessMessage"] != null)
+                    {
+                        <div class="alert alert-success text-center">
+                            @TempData["SuccessMessage"]
+                        </div>
+                    }
                 </div>
 
             </div>

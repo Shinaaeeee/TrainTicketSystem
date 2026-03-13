@@ -1,4 +1,100 @@
 ﻿@page
 @model TrainTicketSystem.Pages.RegisterModel
 @{
+    ViewData["Title"] = "Register";
+}
+
+<style>
+
+    body {
+        background: linear-gradient(135deg,#1f4037,#99f2c8);
+        height: 100vh;
+    }
+
+    .register-container {
+        height: 100vh;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+
+    .register-card {
+        width: 420px;
+        border-radius: 15px;
+        box-shadow: 0 15px 35px rgba(0,0,0,0.3);
+    }
+
+    .system-title {
+        text-align: center;
+        font-weight: bold;
+        margin-bottom: 20px;
+    }
+
+</style>
+
+<div class="register-container">
+
+    <div class="card register-card">
+
+        <div class="card-body p-4">
+
+            <h2 class="system-title">
+                🚆 Train Ticket Booking
+            </h2>
+
+            <form method="post">
+
+                <div class="mb-3">
+                    <label class="form-label">Username</label>
+                    <input asp-for="User.Username" class="form-control" placeholder="Enter username" />
+                    <span asp-validation-for="User.Username" class="text-danger"></span>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Password</label>
+                    <input asp-for="User.Password" type="password" class="form-control" placeholder="Enter password" />
+                    <span asp-validation-for="User.Password" class="text-danger"></span>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Full Name</label>
+                    <input asp-for="User.FullName" class="form-control" placeholder="Your full name" />
+                    <span asp-validation-for="User.FullName" class="text-danger"></span>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Email</label>
+                    <input asp-for="User.Email" class="form-control" placeholder="example@gmail.com" />
+                    <span asp-validation-for="User.Email" class="text-danger"></span>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Phone</label>
+                    <input asp-for="User.Phone" class="form-control" placeholder="Phone number" />
+                    <span asp-validation-for="User.Phone" class="text-danger"></span>
+                </div>
+
+                <button type="submit" class="btn btn-success w-100 mt-3">
+                    Register
+                </button>
+
+            </form>
+
+            <p class="text-danger text-center mt-3">
+                @Model.Message
+            </p>
+
+            <div class="text-center mt-3">
+                Already have account?
+                <a href="/Login" class="fw-bold">Login</a>
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
 }
