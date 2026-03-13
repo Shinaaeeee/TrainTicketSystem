@@ -6,11 +6,11 @@ using TrainTicketSystem.Models;
 
 namespace TrainTicketSystem.Pages.Seats;
 
-public class Index : PageModel
+public class IndexModel : PageModel
 {
     private readonly TrainTicketDbContext _context;
 
-    public Index(TrainTicketDbContext context)
+    public IndexModel(TrainTicketDbContext context)
     {
         _context = context;
     }
