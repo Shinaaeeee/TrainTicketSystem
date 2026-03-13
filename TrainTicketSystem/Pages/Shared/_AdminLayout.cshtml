@@ -1,0 +1,106 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - VNR Train Admin</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body class="bg-slate-50 font-sans text-slate-900 antialiased overflow-x-hidden">
+
+    @{
+        // Cách lấy context an toàn tuyệt đối không gây lỗi
+        var currentPage = Context.Request.Path.ToString();
+    }
+
+    <aside class="fixed left-0 top-0 w-64 h-screen bg-slate-900 text-white flex flex-col z-20">
+        <div class="p-6 border-b border-slate-700">
+            <a href="/Admin" class="flex items-center gap-3">
+                <div class="w-10 h-10 bg-blue-500 rounded-lg flex items-center justify-center">
+                    <i data-lucide="train" class="text-white w-6 h-6"></i>
+                </div>
+                <div>
+                    <h1 class="font-bold text-lg">VNR Train</h1>
+                    <p class="text-xs text-slate-400">Admin Dashboard</p>
+                </div>
+            </a>
+        </div>
+
+        <nav class="flex-1 p-4 space-y-2 overflow-y-auto">
+            <a asp-page="/Admin/Index" class="flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors @(currentPage == "/Admin/Index" || currentPage == "/Admin" ? "bg-blue-600 text-white" : "text-slate-300 hover:bg-slate-800 hover:text-white")">
+                <i data-lucide="home" class="w-5 h-5"></i>
+                <span>Overview</span>
+            </a>
+
+            <a asp-page="/Trains/Index" class="flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors @(currentPage.Contains("/Trains") ? "bg-blue-600 text-white" : "text-slate-300 hover:bg-slate-800 hover:text-white")">
+                <i data-lucide="train" class="w-5 h-5"></i>
+                <span>Train Management</span>
+            </a>
+
+            <a asp-page="/Routes/Index" class="flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors @(currentPage.Contains("/Routes") ? "bg-blue-600 text-white" : "text-slate-300 hover:bg-slate-800 hover:text-white")">
+                <i data-lucide="map" class="w-5 h-5"></i>
+                <span>Route Management</span>
+            </a>
+
+            <a asp-page="/Schedules/Index" class="flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors @(currentPage.Contains("/Schedules") ? "bg-blue-600 text-white" : "text-slate-300 hover:bg-slate-800 hover:text-white")">
+                <i data-lucide="calendar" class="w-5 h-5"></i>
+                <span>Schedule Management</span>
+            </a>
+
+            <a asp-page="/Seats/Index" class="flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors @(currentPage.Contains("/Seats") ? "bg-blue-600 text-white" : "text-slate-300 hover:bg-slate-800 hover:text-white")">
+                <i data-lucide="armchair" class="w-5 h-5"></i>
+                <span>Seat Management</span>
+            </a>
+
+            <a asp-page="/Tickets/Index" class="flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors @(currentPage.Contains("/Tickets") ? "bg-blue-600 text-white" : "text-slate-300 hover:bg-slate-800 hover:text-white")">
+                <i data-lucide="ticket" class="w-5 h-5"></i>
+                <span>Ticket Management</span>
+            </a>
+        </nav>
+
+        <div class="p-4 border-t border-slate-700">
+            <button class="flex items-center gap-3 w-full px-4 py-3 rounded-lg text-sm font-medium text-slate-300 hover:bg-slate-800 hover:text-white transition-colors">
+                <i data-lucide="log-out" class="w-5 h-5"></i>
+                <span>Logout</span>
+            </button>
+        </div>
+    </aside>
+
+    <header class="fixed top-0 left-64 right-0 h-16 bg-white border-b border-slate-200 flex items-center justify-between px-8 z-10">
+        <div class="flex-1 max-w-md">
+            <div class="relative">
+                <i data-lucide="search" class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4"></i>
+                <input type="text" placeholder="Search..." class="w-full pl-10 pr-4 py-2 border border-slate-200 rounded-lg text-sm bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all" />
+            </div>
+        </div>
+
+        <div class="flex items-center gap-6 ml-8">
+            <button class="relative p-2 text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors">
+                <i data-lucide="bell" class="w-5 h-5"></i>
+                <span class="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
+            </button>
+
+            <div class="w-10 h-10 rounded-full bg-slate-200 overflow-hidden border border-slate-300 cursor-pointer">
+                <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Admin" alt="Admin" class="w-full h-full object-cover" />
+            </div>
+
+            <button class="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors">
+                <i data-lucide="log-out" class="w-4 h-4"></i>
+                <span>Logout</span>
+            </button>
+        </div>
+    </header>
+
+    <main class="ml-64 mt-16 p-8">
+        @RenderBody()
+    </main>
+
+    <script>
+        lucide.createIcons();
+    </script>
+
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>
