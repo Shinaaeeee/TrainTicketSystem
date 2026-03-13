@@ -1,0 +1,130 @@
+@page
+@model TrainTicketSystem.Pages.Admin.Bookings.IndexModel
+@{
+    ViewData["Title"] = "Quản lý đặt vé";
+    Layout = "_Layout"; // adjust if your layout file has a different name
+}
+
+<div class="container-fluid px-4 py-4">
+
+    <!-- ========== PAGE HEADER ========== -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="fw-bold mb-0">🎫 Quản lý đặt vé</h2>
+            <small class="text-muted">Tổng: @Model.Bookings.Count đơn</small>
+        </div>
+    </div>
+
+    <!-- ========== FILTER FORM ========== -->
+    <!-- GET form: filters are passed as query string, bookmarkable & shareable -->
+    <form method="get" class="row g-2 mb-4">
+        <div class="col-md-4">
+            <input type="text"
+                   name="SearchName"
+                   value="@Model.SearchName"
+                   class="form-control"
+                   placeholder="🔍 Tìm theo tên khách hàng..." />
+        </div>
+        <div class="col-md-3">
+            <select name="StatusFilter" class="form-select">
+                <option value="">-- Tất cả trạng thái --</option>
+                <option value="Paid"      selected="@(Model.StatusFilter == "Paid")">✅ Paid</option>
+                <option value="Pending"   selected="@(Model.StatusFilter == "Pending")">⏳ Pending</option>
+                <option value="Cancelled" selected="@(Model.StatusFilter == "Cancelled")">❌ Cancelled</option>
+            </select>
+        </div>
+        <div class="col-auto">
+            <button type="submit" class="btn btn-primary">Lọc</button>
+            <a href="/Admin/Bookings" class="btn btn-outline-secondary">Reset</a>
+        </div>
+    </form>
+
+    <!-- ========== BOOKINGS TABLE ========== -->
+    @if (!Model.Bookings.Any())
+    {
+        <div class="alert alert-info">Không có đơn đặt vé nào phù hợp.</div>
+    }
+    else
+    {
+        <div class="table-responsive">
+            <table class="table table-hover table-bordered align-middle">
+                <thead class="table-dark">
+                    <tr>
+                        <th>#ID</th>
+                        <th>Khách hàng</th>
+                        <th>Tuyến đường</th>
+                        <th>Tàu</th>
+                        <th>Khởi hành</th>
+                        <th>Ngày đặt</th>
+                        <th>Tổng tiền</th>
+                        <th>Trạng thái</th>
+                        <th>Hành động</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var b in Model.Bookings)
+                    {
+                        <tr>
+                            <td><strong>@b.BookingId</strong></td>
+                            <td>@b.FullName</td>
+                            <td>@b.StartStation → @b.EndStation</td>
+                            <td>@b.TrainName</td>
+                            <td>@b.DepartureTime.ToString("dd/MM/yyyy HH:mm")</td>
+                            <td>@b.BookingDate.ToString("dd/MM/yyyy")</td>
+                            <td class="text-end fw-semibold">@b.TotalPrice.ToString("N0") ₫</td>
+                            <td>
+                                @{
+                                    // Choose badge color based on status
+                                    var badgeClass = b.Status switch
+                                    {
+                                        "Paid"      => "bg-success",
+                                        "Pending"   => "bg-warning text-dark",
+                                        "Cancelled" => "bg-danger",
+                                        _           => "bg-secondary"
+                                    };
+                                }
+                                <span class="badge @badgeClass">@b.Status</span>
+                            </td>
+                            <td>
+                                <!-- View detail button -->
+                                <a asp-page="Details"
+                                   asp-route-id="@b.BookingId"
+                                   class="btn btn-sm btn-outline-primary">Chi tiết</a>
+
+                                <!-- Status update buttons — only show relevant actions -->
+                                @if (b.Status == "Pending")
+                                {
+                                    <!-- Confirm: mark as Paid -->
+                                    <form method="post"
+                                          asp-page-handler="UpdateStatus"
+                                          class="d-inline">
+                                        <input type="hidden" name="bookingId" value="@b.BookingId" />
+                                        <input type="hidden" name="newStatus" value="Paid" />
+                                        <button type="submit"
+                                                class="btn btn-sm btn-success"
+                                                onclick="return confirm('Xác nhận thanh toán cho đơn #@b.BookingId?')">
+                                            Xác nhận
+                                        </button>
+                                    </form>
+
+                                    <!-- Cancel -->
+                                    <form method="post"
+                                          asp-page-handler="UpdateStatus"
+                                          class="d-inline">
+                                        <input type="hidden" name="bookingId" value="@b.BookingId" />
+                                        <input type="hidden" name="newStatus" value="Cancelled" />
+                                        <button type="submit"
+                                                class="btn btn-sm btn-danger"
+                                                onclick="return confirm('Huỷ đơn #@b.BookingId?')">
+                                            Huỷ
+                                        </button>
+                                    </form>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>
