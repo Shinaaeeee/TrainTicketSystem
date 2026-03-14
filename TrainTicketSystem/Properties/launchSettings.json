@@ -13,8 +13,8 @@
       "commandName": "Project",
       "dotnetRunMessages": true,
       "launchBrowser": true,
-      //"applicationUrl": "http://localhost:5103",
-      "applicationUrl": "http://localhost:5103/Seats/IndexModel",
+      "launchUrl": "Seats/IndexModel",
+      "applicationUrl": "http://localhost:5103",
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development"
       }
