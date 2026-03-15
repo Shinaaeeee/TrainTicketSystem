@@ -1,6 +1,9 @@
 using Microsoft.EntityFrameworkCore;
+using TrainTicketSystem.Hubs;
+using TrainTicketSystem.Jobs;
 using TrainTicketSystem.Models;
 using TrainTicketSystem.Service;
+using TrainTicketSystem.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -11,6 +14,16 @@ builder.Services.AddDbContext<TrainTicketDbContext>(options =>
     options.UseSqlServer(
         builder.Configuration.GetConnectionString("MyCnn")));
 builder.Services.AddScoped<UserSession>();
+
+// ---- SignalR (real-time seat tracking) ----
+builder.Services.AddSignalR();
+
+// ---- Seat service & background cleanup job ----
+builder.Services.AddScoped<ISeatService, SeatService>();
+builder.Services.AddHostedService<SeatHoldCleanupJob>();
+
+// ---- VNPay payment service ----
+builder.Services.AddScoped<VnpayService>();
 
 var app = builder.Build();
 
@@ -31,4 +44,8 @@ app.UseAuthorization();
 
 app.MapRazorPages();
 
+// ---- SignalR Hub endpoint ----
+app.MapHub<SeatHub>("/seatHub");
+
 app.Run();
+

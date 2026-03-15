@@ -29,6 +29,7 @@ namespace TrainTicketSystem.Pages
 
             if (user != null)
             {
+                HttpContext.Session.SetInt32("UserId", user.UserId);
                 HttpContext.Session.SetString("Username", user.Username);
                 HttpContext.Session.SetString("Role", user.Role);
                 if (user.Role == "Admin")

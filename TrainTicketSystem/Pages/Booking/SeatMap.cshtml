@@ -1,0 +1,1003 @@
+@page "/Booking/SeatMap"
+@model TrainTicketSystem.Pages.Booking.SeatMapModel
+@{
+    ViewData["Title"] = "Chọn Ghế - " + (Model.Schedule?.Train?.TrainName ?? "");
+    Layout = "~/Pages/Shared/_Layout.cshtml";
+}
+
+@* ══════════════════════════════════════════════════════════ *@
+@*  FULL-PAGE WRAPPER                                        *@
+@* ══════════════════════════════════════════════════════════ *@
+<div id="seatmap-page">
+
+    @* ── Route Hero ── *@
+    <div class="route-hero">
+        <div class="hero-inner">
+            <div class="route-pill">
+                <span class="route-icon">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                        <path d="M3 12h18M16 6l6 6-6 6"/>
+                    </svg>
+                </span>
+                Chọn ghế của bạn
+            </div>
+
+            <div class="route-row">
+                <div class="station">
+                    <div class="station-name">@(Model.Schedule?.Route?.StartStation ?? "—")</div>
+                    <div class="station-label">Điểm đi</div>
+                </div>
+                <div class="route-arrow">
+                    <div class="arrow-line"></div>
+                    <div class="train-icon-wrap">
+                        <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M12 2c-4 0-8 .5-8 4v9.5C4 17.43 5.57 19 7.5 19L6 20.5v.5h2l2-2h4l2 2h2v-.5L16.5 19c1.93 0 3.5-1.57 3.5-3.5V6c0-3.5-3.58-4-8-4zm0 2c3.86 0 5.95.37 6.5 1.5H5.5C6.05 4.37 8.14 4 12 4zM6 8.5A1.5 1.5 0 0 1 7.5 7 1.5 1.5 0 0 1 9 8.5 1.5 1.5 0 0 1 7.5 10 1.5 1.5 0 0 1 6 8.5zm10.5 1.5A1.5 1.5 0 0 1 15 8.5 1.5 1.5 0 0 1 16.5 7 1.5 1.5 0 0 1 18 8.5 1.5 1.5 0 0 1 16.5 10zM6 14h12v2H6v-2z"/>
+                        </svg>
+                    </div>
+                    <div class="arrow-line"></div>
+                </div>
+                <div class="station">
+                    <div class="station-name">@(Model.Schedule?.Route?.EndStation ?? "—")</div>
+                    <div class="station-label">Điểm đến</div>
+                </div>
+            </div>
+
+            <div class="trip-meta">
+                <span class="meta-chip">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
+                    </svg>
+                    @(Model.Schedule?.DepartureTime?.ToString("dd/MM/yyyy") ?? "—")
+                </span>
+                <span class="meta-chip">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+                    </svg>
+                    @(Model.Schedule?.DepartureTime?.ToString("HH:mm") ?? "—")
+                </span>
+                <span class="meta-chip train-chip">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M12 2c-4 0-8 .5-8 4v9.5C4 17.43 5.57 19 7.5 19L6 20.5v.5h2l2-2h4l2 2h2v-.5L16.5 19c1.93 0 3.5-1.57 3.5-3.5V6c0-3.5-3.58-4-8-4z"/>
+                    </svg>
+                    @(Model.Schedule?.Train?.TrainName ?? "—")
+                </span>
+            </div>
+        </div>
+    </div>
+
+    @* ── Countdown Banner ── *@
+    <div id="countdown-bar" class="countdown-bar" style="display:none;" role="alert">
+        <div class="countdown-inner">
+            <div class="countdown-icon-wrap">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+                </svg>
+            </div>
+            <div class="countdown-text">
+                <span>Thời gian giữ ghế còn lại</span>
+                <strong id="timer-display">10:00</strong>
+            </div>
+            <div class="countdown-progress-wrap">
+                <div id="countdown-progress" class="countdown-progress"></div>
+            </div>
+            <span class="countdown-tip">Hoàn tất thanh toán trước khi hết giờ!</span>
+        </div>
+    </div>
+
+    @* ── Main Layout ── *@
+    <div class="seatmap-layout">
+
+        @* ── Left: Seat Map ── *@
+        <div class="seatmap-panel">
+            <div class="panel-header">
+                <h2 class="panel-title">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/>
+                    </svg>
+                    Sơ đồ toa tàu
+                </h2>
+                <div class="legend">
+                    <span class="legend-item">
+                        <span class="legend-dot available"></span>Trống
+                    </span>
+                    <span class="legend-item">
+                        <span class="legend-dot mine"></span>Đã chọn
+                    </span>
+                    <span class="legend-item">
+                        <span class="legend-dot held"></span>Đang giữ
+                    </span>
+                    <span class="legend-item">
+                        <span class="legend-dot booked"></span>Đã đặt
+                    </span>
+                </div>
+            </div>
+
+            @* Carriage shell *@
+            <div class="carriage-wrap">
+                <div class="carriage-nose">
+                    <svg viewBox="0 0 80 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M0 0 Q40 0 80 20 Q40 40 0 40 Z" fill="currentColor" opacity="0.08"/>
+                        <circle cx="72" cy="12" r="4" fill="currentColor" opacity="0.3"/>
+                        <circle cx="72" cy="28" r="4" fill="currentColor" opacity="0.3"/>
+                    </svg>
+                    <span>Đầu tàu</span>
+                </div>
+
+                <div class="carriage-body">
+                    <div class="aisle-label left-label">Cửa sổ</div>
+                    <div class="aisle-label right-label">Cửa sổ</div>
+
+                    <div id="seat-map" class="seat-grid">
+                        @{
+                            var seats = Model.Seats.OrderBy(s => s.SeatNumber).ToList();
+                            int total = seats.Count;
+                            // Group seats into rows of 4 (2 left + aisle + 2 right)
+                            for (int i = 0; i < total; i += 4)
+                            {
+                                <div class="seat-row">
+                                    @* Left pair *@
+                                    @for (int j = i; j < Math.Min(i + 2, total); j++)
+                                    {
+                                        var seat = seats[j];
+                                        <button class="seat-btn @seat.Status.ToLower()"
+                                                id="seat-@seat.SeatId"
+                                                data-seat-id="@seat.SeatId"
+                                                data-status="@seat.Status"
+                                                data-seat-number="@seat.SeatNumber"
+                                                onclick="handleSeatClick(@seat.SeatId)"
+                                                title="@seat.SeatNumber — @seat.SeatTypeName"
+                                                aria-label="Ghế @seat.SeatNumber, trạng thái: @seat.Status">
+                                            <span class="seat-num">@seat.SeatNumber</span>
+                                            <span class="seat-icon">
+                                                <svg viewBox="0 0 24 24" fill="currentColor">
+                                                    <path d="M19 13V6c0-1.1-.9-2-2-2H7c-1.1 0-2 .9-2 2v7H3v2h1v2h4v-2h8v2h4v-2h1v-2h-2zm-2 0H7V6h10v7z"/>
+                                                </svg>
+                                            </span>
+                                        </button>
+                                    }
+                                    @* Aisle *@
+                                    <div class="aisle"></div>
+                                    @* Right pair *@
+                                    @for (int j = i + 2; j < Math.Min(i + 4, total); j++)
+                                    {
+                                        var seat = seats[j];
+                                        <button class="seat-btn @seat.Status.ToLower()"
+                                                id="seat-@seat.SeatId"
+                                                data-seat-id="@seat.SeatId"
+                                                data-status="@seat.Status"
+                                                data-seat-number="@seat.SeatNumber"
+                                                onclick="handleSeatClick(@seat.SeatId)"
+                                                title="@seat.SeatNumber — @seat.SeatTypeName"
+                                                aria-label="Ghế @seat.SeatNumber, trạng thái: @seat.Status">
+                                            <span class="seat-num">@seat.SeatNumber</span>
+                                            <span class="seat-icon">
+                                                <svg viewBox="0 0 24 24" fill="currentColor">
+                                                    <path d="M19 13V6c0-1.1-.9-2-2-2H7c-1.1 0-2 .9-2 2v7H3v2h1v2h4v-2h8v2h4v-2h1v-2h-2zm-2 0H7V6h10v7z"/>
+                                                </svg>
+                                            </span>
+                                        </button>
+                                    }
+                                </div>
+                            }
+                        }
+                    </div>
+                </div>
+
+                <div class="carriage-tail">
+                    <span>Cuối tàu</span>
+                </div>
+            </div>
+        </div>
+
+        @* ── Right: Booking Summary ── *@
+        <div class="summary-panel">
+            <div class="summary-card">
+                <div class="summary-header">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M20 12V22H4V12"/><path d="M22 7H2v5h20V7z"/><path d="M12 22V7"/><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"/>
+                    </svg>
+                    <span>Ghế đã chọn</span>
+                    <span class="summary-badge" id="seat-count">0</span>
+                    <span class="summary-max">/5</span>
+                </div>
+
+                <div id="selected-summary" class="summary-seats-wrap">
+                    <div class="empty-state">
+                        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                            <rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/>
+                        </svg>
+                        <p>Bấm vào ghế trống để chọn</p>
+                    </div>
+                </div>
+
+                <div id="max-warning" class="max-warning d-none">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M12 2L1 21h22L12 2zm0 3.5L20.5 19h-17L12 5.5zM11 10v4h2v-4h-2zm0 6v2h2v-2h-2z"/>
+                    </svg>
+                    Tối đa 5 ghế mỗi lần đặt!
+                </div>
+
+                <form method="post" asp-page-handler="Checkout" id="checkout-form">
+                    <input type="hidden" name="scheduleId" value="@Model.ScheduleId" />
+                    <div id="selected-seat-inputs"></div>
+                    <button type="submit" class="checkout-btn" id="checkout-btn" disabled onclick="markCheckout()">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M5 12h14M12 5l7 7-7 7"/>
+                        </svg>
+                        Tiếp tục thanh toán
+                    </button>
+                </form>
+            </div>
+
+            @* Price info card *@
+            <div class="info-card">
+                <div class="info-card-title">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+                    </svg>
+                    Lưu ý
+                </div>
+                <ul class="info-list">
+                    <li>Ghế giữ trong <strong>10 phút</strong></li>
+                    <li>Tối đa <strong>5 ghế</strong> mỗi lần đặt</li>
+                    <li>Ghé bị hủy nếu quá hạn</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+@* ── Toast ── *@
+<div class="toast-container position-fixed bottom-0 end-0 p-3" style="z-index:1100">
+    <div id="seat-toast" class="seat-toast toast align-items-center border-0" role="alert" aria-live="assertive">
+        <div class="d-flex align-items-center gap-2 px-3 py-1">
+            <span id="toast-icon" class="toast-icon"></span>
+            <div class="toast-body px-0" id="toast-message"></div>
+            <button type="button" class="btn-close btn-close-white ms-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+        </div>
+    </div>
+</div>
+
+@* ══════════════════════════════════════════════════════════ *@
+@*  STYLES                                                   *@
+@* ══════════════════════════════════════════════════════════ *@
+<style>
+    /* ── Variables ── */
+    :root {
+        --navy:      #0F172A;
+        --navy-800:  #1E293B;
+        --navy-700:  #334155;
+        --blue:      #3B82F6;
+        --blue-600:  #2563EB;
+        --blue-100:  #DBEAFE;
+        --emerald:   #10B981;
+        --emerald-100: #D1FAE5;
+        --amber:     #F59E0B;
+        --amber-100: #FEF3C7;
+        --rose:      #EF4444;
+        --rose-100:  #FEE2E2;
+        --slate-50:  #F8FAFC;
+        --slate-100: #F1F5F9;
+        --slate-200: #E2E8F0;
+        --slate-400: #94A3B8;
+        --slate-600: #475569;
+        --white:     #FFFFFF;
+        --radius-lg: 16px;
+        --radius-md: 10px;
+        --shadow-sm: 0 1px 3px rgba(0,0,0,.08), 0 1px 2px rgba(0,0,0,.05);
+        --shadow-md: 0 4px 16px rgba(0,0,0,.10), 0 2px 4px rgba(0,0,0,.06);
+        --shadow-lg: 0 10px 40px rgba(0,0,0,.12);
+    }
+
+    #seatmap-page {
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+        background: var(--slate-50);
+        min-height: 100vh;
+        padding-bottom: 3rem;
+    }
+
+    /* ── Route Hero ── */
+    .route-hero {
+        background: linear-gradient(135deg, var(--navy) 0%, #1E3A5F 60%, #1a4480 100%);
+        padding: 2.5rem 0 2.5rem;
+        margin-bottom: 0;
+        position: relative;
+        overflow: hidden;
+    }
+    .route-hero::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.03'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+    }
+    .hero-inner {
+        max-width: 900px;
+        margin: 0 auto;
+        padding: 0 1.5rem;
+    }
+    .route-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        background: rgba(255,255,255,0.12);
+        backdrop-filter: blur(8px);
+        color: rgba(255,255,255,0.85);
+        font-size: .75rem;
+        font-weight: 600;
+        letter-spacing: .05em;
+        text-transform: uppercase;
+        padding: 5px 14px;
+        border-radius: 20px;
+        border: 1px solid rgba(255,255,255,0.2);
+        margin-bottom: 1.25rem;
+    }
+    .route-icon { display: flex; align-items: center; }
+    .route-row {
+        display: flex;
+        align-items: center;
+        gap: 1.5rem;
+        margin-bottom: 1.25rem;
+    }
+    .station { flex: 1; }
+    .station-name {
+        font-size: 1.6rem;
+        font-weight: 800;
+        color: #fff;
+        line-height: 1.1;
+        letter-spacing: -.02em;
+    }
+    .station-label {
+        font-size: .78rem;
+        color: rgba(255,255,255,.55);
+        margin-top: 4px;
+        font-weight: 500;
+    }
+    .route-arrow {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        color: rgba(255,255,255,0.4);
+        flex-shrink: 0;
+    }
+    .arrow-line {
+        height: 2px;
+        width: 40px;
+        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4));
+    }
+    .arrow-line:last-child { background: linear-gradient(90deg, rgba(255,255,255,0.4), transparent); }
+    .train-icon-wrap {
+        background: var(--blue);
+        border-radius: 50%;
+        width: 44px; height: 44px;
+        display: flex; align-items: center; justify-content: center;
+        color: white;
+        box-shadow: 0 0 0 4px rgba(59,130,246,.3);
+    }
+    .trip-meta {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+    }
+    .meta-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        background: rgba(255,255,255,0.1);
+        border: 1px solid rgba(255,255,255,0.15);
+        color: rgba(255,255,255,0.9);
+        font-size: .8rem;
+        font-weight: 500;
+        padding: 5px 12px;
+        border-radius: 20px;
+        backdrop-filter: blur(4px);
+    }
+    .train-chip { background: rgba(59,130,246,0.3); border-color: rgba(59,130,246,0.5); }
+
+    /* ── Countdown ── */
+    .countdown-bar {
+        background: linear-gradient(135deg, #78350F, #B45309);
+        padding: 10px 0;
+        box-shadow: 0 3px 12px rgba(0,0,0,.25);
+        border-bottom: 1px solid rgba(255,255,255,0.1);
+    }
+    .countdown-inner {
+        max-width: 900px;
+        margin: 0 auto;
+        padding: 0 1.5rem;
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        color: white;
+        flex-wrap: nowrap;
+    }
+    .countdown-icon-wrap {
+        flex-shrink: 0;
+        background: rgba(255,255,255,0.15);
+        border-radius: 50%;
+        width: 36px; height: 36px;
+        display: flex; align-items: center; justify-content: center;
+        border: 1px solid rgba(255,255,255,0.2);
+    }
+    .countdown-text {
+        display: flex;
+        flex-direction: column;
+        line-height: 1.25;
+        flex-shrink: 0;
+    }
+    .countdown-text span { font-size: .72rem; opacity: .8; font-weight: 500; }
+    .countdown-text strong { font-size: 1.25rem; font-weight: 800; letter-spacing: -.02em; }
+    .countdown-progress-wrap {
+        flex: 1;
+        min-width: 80px;
+        background: rgba(255,255,255,0.2);
+        border-radius: 6px;
+        height: 8px;
+        overflow: hidden;
+    }
+    .countdown-progress {
+        height: 100%;
+        background: linear-gradient(90deg, #FDE68A, #FBBF24);
+        border-radius: 6px;
+        width: 100%;
+        transition: width 1s linear;
+    }
+    .countdown-tip {
+        font-size: .75rem;
+        opacity: .85;
+        white-space: nowrap;
+        font-weight: 500;
+        flex-shrink: 0;
+    }
+    @@media (max-width: 600px) {
+        .countdown-tip { display: none; }
+        .countdown-inner { gap: 10px; }
+    }
+
+    /* ── Layout ── */
+    .seatmap-layout {
+        max-width: 900px;
+        margin: 0 auto;
+        padding: 2rem 1.5rem 0;
+        display: grid;
+        grid-template-columns: 1fr 280px;
+        gap: 1.5rem;
+        align-items: start;
+    }
+    @@media (max-width: 768px) {
+        .seatmap-layout {
+            grid-template-columns: 1fr;
+            padding: 1.25rem 1rem 0;
+        }
+    }
+
+    /* ── Seat Map Panel ── */
+    .seatmap-panel {
+        background: white;
+        border-radius: var(--radius-lg);
+        box-shadow: var(--shadow-md);
+        overflow: hidden;
+        border: 1px solid var(--slate-200);
+    }
+    .panel-header {
+        padding: 1.25rem 1.5rem;
+        border-bottom: 1px solid var(--slate-100);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 12px;
+    }
+    .panel-title {
+        font-size: 1rem;
+        font-weight: 700;
+        color: var(--navy);
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin: 0;
+    }
+    .panel-title svg { color: var(--blue); }
+
+    /* ── Legend ── */
+    .legend { display: flex; gap: 14px; flex-wrap: wrap; }
+    .legend-item {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        font-size: .78rem;
+        color: var(--slate-600);
+        font-weight: 500;
+    }
+    .legend-dot {
+        width: 12px; height: 12px;
+        border-radius: 3px;
+        flex-shrink: 0;
+    }
+    .legend-dot.available { background: var(--emerald); }
+    .legend-dot.mine      { background: var(--blue); }
+    .legend-dot.held      { background: var(--amber); }
+    .legend-dot.booked    { background: var(--rose); }
+
+    /* ── Carriage ── */
+    .carriage-wrap {
+        padding: 1.5rem;
+        position: relative;
+    }
+    .carriage-nose, .carriage-tail {
+        text-align: center;
+        color: var(--slate-400);
+        font-size: .72rem;
+        font-weight: 600;
+        letter-spacing: .06em;
+        text-transform: uppercase;
+        padding: 6px 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+    }
+    .carriage-nose svg { width: 40px; height: 20px; color: var(--navy); }
+    .carriage-body {
+        border: 2px solid var(--slate-200);
+        border-radius: var(--radius-md);
+        padding: 1.25rem 1.5rem;
+        position: relative;
+        background: var(--slate-50);
+    }
+    .aisle-label {
+        position: absolute;
+        top: -10px;
+        font-size: .7rem;
+        font-weight: 600;
+        letter-spacing: .05em;
+        text-transform: uppercase;
+        color: var(--slate-400);
+        background: var(--slate-50);
+        padding: 0 6px;
+    }
+    .left-label  { left: 60px; }
+    .right-label { right: 60px; }
+
+    /* ── Seat Grid ── */
+    .seat-grid { display: flex; flex-direction: column; gap: 10px; }
+    .seat-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr 32px 1fr 1fr;
+        gap: 8px;
+        align-items: center;
+    }
+    .aisle {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 3px;
+    }
+    .aisle::before, .aisle::after {
+        content: '';
+        width: 2px;
+        flex: 1;
+        background: var(--slate-200);
+        border-radius: 1px;
+    }
+
+    /* ── Seat Button ── */
+    .seat-btn {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 3px;
+        height: 64px;
+        border-radius: var(--radius-md);
+        border: 2px solid transparent;
+        cursor: pointer;
+        transition: transform 120ms ease, box-shadow 120ms ease, background 150ms ease;
+        position: relative;
+        font-family: inherit;
+        padding: 0;
+    }
+    .seat-btn:focus-visible { outline: 3px solid var(--blue); outline-offset: 2px; }
+
+    .seat-num {
+        font-size: .72rem;
+        font-weight: 700;
+        line-height: 1;
+    }
+    .seat-icon svg {
+        width: 22px; height: 22px;
+    }
+
+    /* States */
+    .seat-btn.available {
+        background: var(--emerald-100);
+        border-color: var(--emerald);
+        color: #065F46;
+    }
+    .seat-btn.available:hover {
+        background: var(--emerald);
+        color: white;
+        transform: translateY(-3px);
+        box-shadow: 0 6px 16px rgba(16,185,129,.35);
+    }
+
+    .seat-btn.mine {
+        background: var(--blue);
+        border-color: var(--blue-600);
+        color: white;
+        transform: translateY(-2px);
+        box-shadow: 0 6px 16px rgba(59,130,246,.35);
+    }
+    .seat-btn.mine:hover {
+        background: var(--blue-600);
+        transform: translateY(-4px);
+        box-shadow: 0 8px 20px rgba(59,130,246,.4);
+    }
+
+    .seat-btn.held {
+        background: var(--amber-100);
+        border-color: var(--amber);
+        color: #92400E;
+        cursor: not-allowed;
+        opacity: .85;
+    }
+
+    .seat-btn.booked {
+        background: var(--rose-100);
+        border-color: var(--rose);
+        color: #7F1D1D;
+        cursor: not-allowed;
+        opacity: .75;
+    }
+
+    /* ── Summary Panel ── */
+    .summary-panel { display: flex; flex-direction: column; gap: 1rem; }
+
+    .summary-card {
+        background: white;
+        border-radius: var(--radius-lg);
+        box-shadow: var(--shadow-md);
+        border: 1px solid var(--slate-200);
+        overflow: hidden;
+    }
+    .summary-header {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 1rem 1.25rem;
+        border-bottom: 1px solid var(--slate-100);
+        font-size: .92rem;
+        font-weight: 700;
+        color: var(--navy);
+    }
+    .summary-header svg { color: var(--blue); }
+    .summary-badge {
+        background: var(--blue);
+        color: white;
+        font-size: .75rem;
+        font-weight: 800;
+        min-width: 22px;
+        height: 22px;
+        border-radius: 11px;
+        display: flex; align-items: center; justify-content: center;
+        padding: 0 6px;
+        margin-left: auto;
+    }
+    .summary-max { font-size: .8rem; color: var(--slate-400); font-weight: 500; }
+
+    .summary-seats-wrap {
+        padding: 1rem 1.25rem;
+        min-height: 120px;
+    }
+    .empty-state {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        color: var(--slate-400);
+        padding: 1rem 0;
+        text-align: center;
+    }
+    .empty-state p { font-size: .82rem; margin: 0; }
+
+    .selected-seat-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        background: var(--blue-100);
+        color: var(--blue-600);
+        font-size: .8rem;
+        font-weight: 700;
+        padding: 5px 10px;
+        border-radius: 8px;
+        margin: 3px;
+        border: 1.5px solid rgba(59,130,246,.3);
+        animation: chipIn 200ms ease;
+    }
+    @@keyframes chipIn {
+        from { opacity:0; transform:scale(.7); }
+        to   { opacity:1; transform:scale(1); }
+    }
+
+    .max-warning {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        background: var(--rose-100);
+        color: var(--rose);
+        font-size: .8rem;
+        font-weight: 600;
+        padding: 8px 1.25rem;
+    }
+
+    .checkout-btn {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        width: 100%;
+        background: linear-gradient(135deg, var(--blue), var(--blue-600));
+        color: white;
+        font-size: .9rem;
+        font-weight: 700;
+        padding: 14px 20px;
+        border: none;
+        cursor: pointer;
+        transition: opacity 150ms, transform 150ms, box-shadow 150ms;
+        font-family: inherit;
+    }
+    .checkout-btn:not(:disabled):hover {
+        opacity: .92;
+        transform: translateY(-1px);
+        box-shadow: 0 6px 20px rgba(59,130,246,.4);
+    }
+    .checkout-btn:disabled {
+        background: var(--slate-200);
+        color: var(--slate-400);
+        cursor: not-allowed;
+        transform: none;
+        box-shadow: none;
+    }
+
+    /* ── Info Card ── */
+    .info-card {
+        background: white;
+        border-radius: var(--radius-lg);
+        padding: 1rem 1.25rem;
+        box-shadow: var(--shadow-sm);
+        border: 1px solid var(--slate-200);
+    }
+    .info-card-title {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-size: .82rem;
+        font-weight: 700;
+        color: var(--navy-700);
+        margin-bottom: .75rem;
+    }
+    .info-card-title svg { color: var(--blue); }
+    .info-list {
+        list-style: none;
+        padding: 0; margin: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+    }
+    .info-list li {
+        font-size: .8rem;
+        color: var(--slate-600);
+        padding-left: 14px;
+        position: relative;
+    }
+    .info-list li::before {
+        content: '•';
+        position: absolute;
+        left: 0;
+        color: var(--blue);
+        font-weight: 800;
+    }
+
+    /* ── Toast ── */
+    .seat-toast {
+        border-radius: 12px !important;
+        min-width: 280px;
+        font-size: .88rem;
+        font-weight: 500;
+        box-shadow: var(--shadow-lg) !important;
+    }
+
+    /* ── Reduced Motion ── */
+    @@media (prefers-reduced-motion: reduce) {
+        .seat-btn, .checkout-btn { transition: none; }
+        .seat-btn:hover { transform: none; }
+    }
+</style>
+
+@* ══════════════════════════════════════════════════════════ *@
+@*  SCRIPTS                                                  *@
+@* ══════════════════════════════════════════════════════════ *@
+@section Scripts {
+    <script src="~/lib/microsoft/signalr/dist/browser/signalr.min.js"></script>
+    <script>
+        const scheduleId    = @Model.ScheduleId;
+        const currentUserId = @Model.CurrentUserId;
+        let heldSeats       = new Set(@Html.Raw(Newtonsoft.Json.JsonConvert.SerializeObject(
+            Model.Seats.Where(s => s.Status == "Mine").Select(s => s.SeatId))));
+        let countdownTimer  = null;
+        let remainingSeconds = 600;
+        const TOTAL_SECONDS  = 600;
+
+        // ── SignalR ──────────────────────────────────────────────
+        const connection = new signalR.HubConnectionBuilder()
+            .withUrl("/seatHub")
+            .withAutomaticReconnect()
+            .build();
+
+        connection.on("SeatStatusChanged", ({ seatId, status, heldByUserId }) => {
+            const resolved = (status === "Held" && heldByUserId === currentUserId) ? "Mine" : status;
+            updateSeatButton(seatId, resolved.toLowerCase());
+        });
+
+        connection.start()
+            .then(() => connection.invoke("JoinScheduleGroup", scheduleId, currentUserId))
+            .catch(err => console.error("SignalR:", err));
+
+        // ── Seat Click ───────────────────────────────────────────
+        function handleSeatClick(seatId) {
+            const btn    = document.getElementById(`seat-${seatId}`);
+            const status = btn.dataset.status.toLowerCase();
+            if (status === "held")   { showToast("Ghế đang được giữ, thử lại sau!", "warning"); return; }
+            if (status === "booked") return;
+            if (status === "mine")   { releaseSeat(seatId); }
+            else {
+                if (heldSeats.size >= 5) {
+                    const w = document.getElementById("max-warning");
+                    w.classList.remove("d-none");
+                    setTimeout(() => w.classList.add("d-none"), 2500);
+                    return;
+                }
+                holdSeat(seatId);
+            }
+        }
+
+        // ── AJAX: Hold ───────────────────────────────────────────
+        async function holdSeat(seatId) {
+            const token = document.querySelector('input[name="__RequestVerificationToken"]')?.value ?? "";
+            const res   = await fetch(`/Booking/SeatMap?handler=Hold&seatId=${seatId}&scheduleId=${scheduleId}`, {
+                method: "POST",
+                headers: { "RequestVerificationToken": token }
+            });
+            const data = await res.json();
+            if (data.success) {
+                heldSeats.add(seatId);
+                updateSeatButton(seatId, "mine");
+                updateSummary();
+                if (!countdownTimer) startCountdown();
+            } else {
+                showToast(data.message, "danger");
+                updateSeatButton(seatId, "held");
+            }
+        }
+
+        // ── AJAX: Release ────────────────────────────────────────
+        async function releaseSeat(seatId) {
+            const token = document.querySelector('input[name="__RequestVerificationToken"]')?.value ?? "";
+            await fetch(`/Booking/SeatMap?handler=Release&seatId=${seatId}&scheduleId=${scheduleId}`, {
+                method: "POST",
+                headers: { "RequestVerificationToken": token }
+            });
+            heldSeats.delete(seatId);
+            updateSeatButton(seatId, "available");
+            updateSummary();
+            if (heldSeats.size === 0) stopCountdown();
+        }
+
+        // ── UI Helpers ───────────────────────────────────────────
+        function updateSeatButton(seatId, status) {
+            const btn = document.getElementById(`seat-${seatId}`);
+            if (!btn) return;
+            btn.className = `seat-btn ${status}`;
+            btn.dataset.status = status;
+        }
+
+        function updateSummary() {
+            const count = heldSeats.size;
+            document.getElementById("seat-count").textContent = count;
+            document.getElementById("checkout-btn").disabled = count === 0;
+
+            const inputs = document.getElementById("selected-seat-inputs");
+            inputs.innerHTML = "";
+            heldSeats.forEach(id => {
+                const inp = document.createElement("input");
+                inp.type = "hidden"; inp.name = "selectedSeatIds"; inp.value = id;
+                inputs.appendChild(inp);
+            });
+
+            const summary = document.getElementById("selected-summary");
+            if (count === 0) {
+                summary.innerHTML = `
+                    <div class="empty-state">
+                        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                            <rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/>
+                        </svg>
+                        <p>Bấm vào ghế trống để chọn</p>
+                    </div>`;
+            } else {
+                summary.innerHTML = `<div style="display:flex;flex-wrap:wrap;padding:4px 0">` +
+                    [...heldSeats].map(id => {
+                        const btn = document.getElementById(`seat-${id}`);
+                        const num = btn?.dataset.seatNumber ?? id;
+                        return `<span class="selected-seat-chip">
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M19 13V6c0-1.1-.9-2-2-2H7c-1.1 0-2 .9-2 2v7H3v2h1v2h4v-2h8v2h4v-2h1v-2h-2z"/>
+                            </svg>
+                            ${num}</span>`;
+                    }).join("") + `</div>`;
+            }
+        }
+
+        // ── Countdown ────────────────────────────────────────────
+        function startCountdown() {
+            remainingSeconds = TOTAL_SECONDS;
+            const bar = document.getElementById("countdown-bar");
+            bar.style.display = "block";
+            countdownTimer = setInterval(() => {
+                remainingSeconds--;
+                const m = Math.floor(remainingSeconds / 60);
+                const s = String(remainingSeconds % 60).padStart(2,'0');
+                document.getElementById("timer-display").textContent = `${m}:${s}`;
+                const pct = (remainingSeconds / TOTAL_SECONDS * 100).toFixed(1);
+                document.getElementById("countdown-progress").style.width = `${pct}%`;
+
+                // Turn bar red when < 2 min
+                if (remainingSeconds <= 120) {
+                    bar.style.background = "linear-gradient(135deg, #7F1D1D, #DC2626)";
+                }
+
+                if (remainingSeconds <= 0) {
+                    clearInterval(countdownTimer); countdownTimer = null;
+                    showToast("Hết thời gian giữ ghế! Vui lòng chọn lại.", "warning");
+                    heldSeats.forEach(id => updateSeatButton(id, "available"));
+                    heldSeats.clear();
+                    updateSummary();
+                    document.getElementById("countdown-bar").style.display = "none";
+                }
+            }, 1000);
+        }
+
+        function stopCountdown() {
+            if (countdownTimer) { clearInterval(countdownTimer); countdownTimer = null; }
+            const bar = document.getElementById("countdown-bar");
+            bar.style.display = "none";
+            bar.style.background = "";
+        }
+
+        // ── Checkout ─────────────────────────────────────────────
+        function markCheckout() {
+            connection.invoke("MarkInCheckout").catch(err => console.error(err));
+        }
+
+        // ── Toast ────────────────────────────────────────────────
+        function showToast(message, type = "info") {
+            const typeMap = {
+                success: { bg: "#10B981", icon: "✓" },
+                danger:  { bg: "#EF4444", icon: "✗" },
+                warning: { bg: "#F59E0B", icon: "!" },
+                info:    { bg: "#3B82F6", icon: "i" }
+            };
+            const t = typeMap[type] || typeMap.info;
+            const toast = document.getElementById("seat-toast");
+            toast.style.background = t.bg;
+            toast.style.color = "white";
+            document.getElementById("toast-icon").textContent = t.icon;
+            document.getElementById("toast-message").textContent = message;
+            bootstrap.Toast.getOrCreateInstance(toast, { delay: 3000 }).show();
+        }
+
+        // Initialize
+        updateSummary();
+        if (heldSeats.size > 0) startCountdown();
+    </script>
+    @Html.AntiForgeryToken()
+}

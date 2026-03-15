@@ -1,0 +1,203 @@
+@page
+@model TrainTicketSystem.Pages.Revenue.IndexModel
+@{
+    ViewData["Title"] = "Revenue Statistics";
+    Layout = "~/Pages/Shared/_AdminLayout.cshtml";
+    var r = Model.Revenue;
+}
+
+<!-- ═══ PAGE HEADER ══════════════════════════════════════════════ -->
+<div class="flex items-center justify-between mb-8">
+    <div>
+        <h1 class="text-3xl font-bold text-slate-900">Revenue Statistics</h1>
+        <p class="text-sm text-slate-500 mt-1">
+            @if (Model.FromDate.HasValue || Model.ToDate.HasValue)
+            {
+                <span>
+                    Filtered:
+                    @(Model.FromDate?.ToString("dd/MM/yyyy") ?? "...")
+                    →
+                    @(Model.ToDate?.ToString("dd/MM/yyyy") ?? "...")
+                </span>
+            }
+            else
+            {
+                <span>All time</span>
+            }
+        </p>
+    </div>
+</div>
+
+<!-- ═══ DATE FILTER ══════════════════════════════════════════════ -->
+<form method="get" class="flex flex-wrap gap-4 mb-8 items-end">
+    <div>
+        <label class="block text-xs font-medium text-slate-500 mb-1">From date</label>
+        <input type="date" name="FromDate"
+               value="@Model.FromDate?.ToString("yyyy-MM-dd")"
+               class="border border-slate-300 rounded-lg px-4 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm" />
+    </div>
+    <div>
+        <label class="block text-xs font-medium text-slate-500 mb-1">To date</label>
+        <input type="date" name="ToDate"
+               value="@Model.ToDate?.ToString("yyyy-MM-dd")"
+               class="border border-slate-300 rounded-lg px-4 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm" />
+    </div>
+    <button type="submit"
+            class="bg-slate-800 hover:bg-slate-900 text-white px-5 py-2 rounded-lg text-sm font-medium transition-colors shadow-sm">
+        Apply
+    </button>
+    @if (Model.FromDate.HasValue || Model.ToDate.HasValue)
+    {
+        <a href="/Admin/Revenue"
+           class="bg-red-50 hover:bg-red-100 border border-red-200 text-red-600 px-5 py-2 rounded-lg text-sm font-medium transition-colors flex items-center shadow-sm">
+            Reset
+        </a>
+    }
+</form>
+
+<!-- ═══ SUMMARY CARDS ══════════════════════════════════════════════ -->
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+
+    <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-5">
+        <div class="flex items-center justify-between mb-3">
+            <p class="text-sm font-medium text-slate-500">Total Revenue</p>
+            <span class="p-2 bg-blue-50 rounded-lg">
+                <i data-lucide="banknote" class="w-4 h-4 text-blue-600"></i>
+            </span>
+        </div>
+        <p class="text-2xl font-bold text-blue-600">@r.TotalRevenue.ToString("N0") ₫</p>
+    </div>
+
+    <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-5">
+        <div class="flex items-center justify-between mb-3">
+            <p class="text-sm font-medium text-slate-500">Total Bookings</p>
+            <span class="p-2 bg-slate-100 rounded-lg">
+                <i data-lucide="ticket" class="w-4 h-4 text-slate-600"></i>
+            </span>
+        </div>
+        <p class="text-2xl font-bold text-slate-800">@r.TotalBookings</p>
+    </div>
+
+    <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-5">
+        <div class="flex items-center justify-between mb-3">
+            <p class="text-sm font-medium text-slate-500">Paid</p>
+            <span class="p-2 bg-green-50 rounded-lg">
+                <i data-lucide="circle-check" class="w-4 h-4 text-green-600"></i>
+            </span>
+        </div>
+        <p class="text-2xl font-bold text-green-600">@r.PaidBookings</p>
+    </div>
+
+    <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-5">
+        <div class="flex items-center justify-between mb-3">
+            <p class="text-sm font-medium text-slate-500">Pending</p>
+            <span class="p-2 bg-amber-50 rounded-lg">
+                <i data-lucide="clock" class="w-4 h-4 text-amber-500"></i>
+            </span>
+        </div>
+        <p class="text-2xl font-bold text-amber-500">@r.PendingBookings</p>
+    </div>
+
+</div>
+
+<!-- ═══ REVENUE BY ROUTE ══════════════════════════════════════════ -->
+<div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden mb-6">
+
+    <div class="px-6 py-4 border-b border-slate-200 flex items-center gap-2">
+        <i data-lucide="train" class="w-4 h-4 text-slate-500"></i>
+        <h2 class="font-semibold text-slate-800">Revenue by Route</h2>
+    </div>
+
+    @if (!r.ByRoute.Any())
+    {
+        <div class="py-12 flex flex-col items-center justify-center text-slate-400">
+            <i data-lucide="map" class="w-10 h-10 mb-2 text-slate-300"></i>
+            <p class="text-sm">No data available.</p>
+        </div>
+    }
+    else
+    {
+        var maxRevenue = r.ByRoute.Max(x => x.TotalRevenue);
+
+        <table class="w-full text-left border-collapse">
+            <thead>
+                <tr class="bg-slate-50 border-b border-slate-200">
+                    <th class="py-4 px-6 font-semibold text-slate-700 text-sm">Origin</th>
+                    <th class="py-4 px-6 font-semibold text-slate-700 text-sm">Destination</th>
+                    <th class="py-4 px-6 font-semibold text-slate-700 text-sm text-center">Bookings</th>
+                    <th class="py-4 px-6 font-semibold text-slate-700 text-sm">Revenue</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-200">
+                @foreach (var route in r.ByRoute)
+                {
+                    var pct = maxRevenue > 0
+                    ? (int)(route.TotalRevenue / maxRevenue * 100)
+                    : 0;
+
+                    <tr class="hover:bg-slate-50 transition-colors">
+                        <td class="py-4 px-6 font-medium text-slate-900">@route.StartStation</td>
+                        <td class="py-4 px-6 text-slate-700">@route.EndStation</td>
+                        <td class="py-4 px-6 text-center">
+                            <span class="px-3 py-1 rounded-full text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-100">
+                                @route.TotalBookings
+                            </span>
+                        </td>
+                        <td class="py-4 px-6">
+                            <div class="flex items-center gap-3">
+                                <!-- Mini bar chart -->
+                                <div class="flex-1 bg-slate-100 rounded-full h-2">
+                                    <div class="bg-blue-500 h-2 rounded-full" style="width: @pct%"></div>
+                                </div>
+                                <span class="font-semibold text-slate-800 min-w-[110px] text-right">
+                                    @route.TotalRevenue.ToString("N0") ₫
+                                </span>
+                            </div>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+</div>
+
+<!-- ═══ REVENUE BY MONTH ══════════════════════════════════════════ -->
+<div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+
+    <div class="px-6 py-4 border-b border-slate-200 flex items-center gap-2">
+        <i data-lucide="calendar" class="w-4 h-4 text-slate-500"></i>
+        <h2 class="font-semibold text-slate-800">Revenue by Month</h2>
+    </div>
+
+    @if (!r.ByMonth.Any())
+    {
+        <div class="py-12 flex flex-col items-center justify-center text-slate-400">
+            <i data-lucide="calendar-x" class="w-10 h-10 mb-2 text-slate-300"></i>
+            <p class="text-sm">No data available.</p>
+        </div>
+    }
+    else
+    {
+        <table class="w-full text-left border-collapse">
+            <thead>
+                <tr class="bg-slate-50 border-b border-slate-200">
+                    <th class="py-4 px-6 font-semibold text-slate-700 text-sm">Month</th>
+                    <th class="py-4 px-6 font-semibold text-slate-700 text-sm text-center">Transactions</th>
+                    <th class="py-4 px-6 font-semibold text-slate-700 text-sm text-right">Revenue</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-200">
+                @foreach (var m in r.ByMonth)
+                {
+                    <tr class="hover:bg-slate-50 transition-colors">
+                        <td class="py-4 px-6 font-medium text-slate-900">@m.Label</td>
+                        <td class="py-4 px-6 text-center text-slate-700">@m.TotalPayments</td>
+                        <td class="py-4 px-6 text-right font-semibold text-green-600">
+                            @m.TotalRevenue.ToString("N0") ₫
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+</div>
