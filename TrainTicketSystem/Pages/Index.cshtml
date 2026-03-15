@@ -1,10 +1,83 @@
 ﻿@page
-@model IndexModel
+@model TrainTicketSystem.Pages.IndexModel
 @{
-    ViewData["Title"] = "Home page";
+    Layout = "UserLayout";
+}
+@{
+    ViewData["Title"] = "Train Ticket Booking";
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+<div class="container mt-4">
+
+    <h2 class="text-center mb-4">🚆 Train Ticket Booking System</h2>
+
+    <!-- SEARCH FORM -->
+
+    <form method="get" class="row g-3 mb-4">
+
+        <div class="col-md-3">
+            <label>Date</label>
+            <input type="date" asp-for="SearchDate" class="form-control" />
+        </div>
+
+        <div class="col-md-3">
+            <label>From Station</label>
+            <input type="text" asp-for="FromStation" class="form-control" />
+        </div>
+
+        <div class="col-md-3">
+            <label>To Station</label>
+            <input type="text" asp-for="ToStation" class="form-control" />
+        </div>
+
+        
+
+        <div class="col-md-1 d-grid">
+            <label></label>
+            <button class="btn btn-primary">Search</button>
+        </div>
+
+    </form>
+
+
+    <!-- TRAIN LIST -->
+
+    <table class="table table-bordered table-striped">
+
+        <thead class="table-dark">
+            <tr>
+                <th>Train</th>
+                <th>From</th>
+                <th>To</th>
+                <th>Departure</th>
+                
+                <th>Price</th>
+                <th></th>
+            </tr>
+        </thead>
+
+        <tbody>
+
+            @foreach (var item in Model.Trains)
+            {
+                <tr>
+                    <td>@item.TrainName</td>
+                    <td>@item.FromStation</td>
+                    <td>@item.ToStation</td>
+                    <td>@item.DepartureTime</td>
+
+                    <td>@item.Price?.ToString("N0") VND</td>
+                    <td>
+                        <a class="btn btn-success btn-sm"
+                           href="/Trains/TrainDetail?id=@item.ScheduleId">
+                            View
+                        </a>
+                    </td>
+                </tr>
+            }
+
+        </tbody>
+
+    </table>
+
 </div>

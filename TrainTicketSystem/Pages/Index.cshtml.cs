@@ -1,27 +1,67 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.EntityFrameworkCore;
+using TrainTicketSystem.Models;
+using TrainTicketSystem.ViewModels;
 
 namespace TrainTicketSystem.Pages
 {
     public class IndexModel : PageModel
     {
-        private readonly ILogger<IndexModel> _logger;
+        private readonly TrainTicketDbContext _context;
 
-        public IndexModel(ILogger<IndexModel> logger)
+        public IndexModel(TrainTicketDbContext context)
         {
-            _logger = logger;
+            _context = context;
         }
 
-        public IActionResult OnGet()
-        {
-            var username = HttpContext.Session.GetString("Username");
+        public List<TrainViewModel> Trains { get; set; }
 
-            if (username == null)
+        [BindProperty(SupportsGet = true)]
+        public DateTime? SearchDate { get; set; }
+
+        [BindProperty(SupportsGet = true)]
+        public string FromStation { get; set; }
+
+        [BindProperty(SupportsGet = true)]
+        public string ToStation { get; set; }
+
+        [BindProperty(SupportsGet = true)]
+        public string SeatType { get; set; }
+
+        public void OnGet()
+        {
+            var query = from s in _context.Schedules
+                        join t in _context.Trains on s.TrainId equals t.TrainId
+                        join r in _context.Routes on s.RouteId equals r.RouteId
+                        select new TrainViewModel
+                        {
+                            ScheduleId = s.ScheduleId,
+                            TrainName = t.TrainName,
+                            FromStation = r.StartStation,
+                            ToStation = r.EndStation,
+                            DepartureTime = s.DepartureTime,
+                            Price = s.Price
+                        };
+
+
+            if (SearchDate != null)
             {
-                return RedirectToPage("/Login");
+                query = query.Where(x => x.DepartureTime.Value.Date == SearchDate.Value.Date);
             }
 
-            return Page();
+            if (!string.IsNullOrEmpty(FromStation))
+            {
+                query = query.Where(x => x.FromStation.Contains(FromStation));
+            }
+
+            if (!string.IsNullOrEmpty(ToStation))
+            {
+                query = query.Where(x => x.ToStation.Contains(ToStation));
+            }
+
+
+            Trains = query.ToList();
         }
     }
 }

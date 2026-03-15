@@ -1,0 +1,166 @@
+﻿@page
+@model TrainTicketSystem.Pages.Trains.TrainDetailModel
+@{
+    ViewData["Title"] = "Train Detail";
+}
+
+<style>
+
+    body {
+        background: #f5f7fa;
+    }
+
+    .train-card {
+        max-width: 750px;
+        margin: auto;
+        border-radius: 15px;
+    }
+
+    .seat-map {
+        max-width: 420px;
+        margin: auto;
+    }
+
+    .seat {
+        border-radius: 10px;
+        padding: 12px;
+        font-weight: bold;
+        transition: 0.2s;
+    }
+
+    .seat-number {
+        font-size: 18px;
+    }
+
+    /* available seat */
+
+    .available {
+        background: #d4edda;
+        border: 2px solid #28a745;
+    }
+
+        .available:hover {
+            transform: scale(1.05);
+            box-shadow: 0 5px 10px rgba(0,0,0,0.15);
+        }
+
+    /* booked seat */
+
+    .booked {
+        background: #f8d7da;
+        border: 2px solid #dc3545;
+        opacity: 0.7;
+    }
+
+</style>
+
+
+<div class="container mt-5">
+
+    <div class="card shadow train-card">
+
+        <div class="card-header bg-primary text-white">
+            <h3>🚆 Train Detail</h3>
+        </div>
+
+        <div class="card-body">
+
+            <h5>
+                <b>@Model.Route?.StartStation</b>
+                →
+                <b>@Model.Route?.EndStation</b>
+            </h5>
+
+            <p>
+                <b>Train:</b> @Model.Train?.TrainName
+            </p>
+
+            <p>
+                <b>Departure:</b> @Model.Schedule?.DepartureTime
+            </p>
+
+            <p>
+                <b>Price:</b>
+                <span class="text-danger fw-bold">
+                    @Model.Schedule?.Price?.ToString("N0") VND
+                </span>
+            </p>
+
+            <hr />
+
+            <h4 class="text-center mb-3">💺 Seat Map</h4>
+
+            <form method="post" asp-page-handler="Book">
+
+                <input type="hidden" name="scheduleId" value="@Model.Schedule.ScheduleId" />
+
+                <div class="seat-map">
+
+                    @{
+                        int count = 0;
+                    }
+
+                    <div class="row">
+
+                        @foreach (var seat in Model.Seats)
+                        {
+                            bool isBooked = Model.BookedSeatIds.Contains(seat.SeatId);
+
+                            <div class="col-6 mb-3 text-center">
+
+                                <div class="seat @(isBooked ? "booked" : "available")">
+
+                                    <div class="seat-number">
+                                        @seat.SeatNumber
+                                    </div>
+
+                                    <div class="small text-muted">
+                                        Type: @seat.SeatTypeId
+                                    </div>
+
+                                    @if (!isBooked)
+                                    {
+                                        <input type="checkbox"
+                                               name="SelectedSeats"
+                                               value="@seat.SeatId"
+                                               class="form-check-input mt-2" />
+                                    }
+                                    else
+                                    {
+                                        <div class="text-danger mt-2">
+                                            Booked
+                                        </div>
+                                    }
+
+                                </div>
+
+                            </div>
+
+                            count++;
+
+                            if (count % 2 == 0)
+                            {
+                                <div class="w-100"></div>
+                            }
+
+                        }
+
+                    </div>
+
+                </div>
+
+                <div class="text-center">
+
+                    <button class="btn btn-success mt-3 px-4">
+                        🎟 Book Selected Seats
+                    </button>
+
+                </div>
+
+            </form>
+
+        </div>
+
+    </div>
+
+</div>
