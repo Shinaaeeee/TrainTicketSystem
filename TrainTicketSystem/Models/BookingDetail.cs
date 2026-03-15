@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 
 namespace TrainTicketSystem.Models;
@@ -12,6 +12,11 @@ public partial class BookingDetail
     public int? SeatId { get; set; }
 
     public decimal? Price { get; set; }
+
+    // Passenger info per seat (one booking can have up to 5 passengers)
+    public string? PassengerName { get; set; }
+
+    public string? PassengerPhone { get; set; }
 
     public virtual Booking? Booking { get; set; }
 

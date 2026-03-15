@@ -22,6 +22,9 @@ builder.Services.AddSignalR();
 builder.Services.AddScoped<ISeatService, SeatService>();
 builder.Services.AddHostedService<SeatHoldCleanupJob>();
 
+// ---- VNPay payment service ----
+builder.Services.AddScoped<VnpayService>();
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.

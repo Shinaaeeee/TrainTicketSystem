@@ -1,0 +1,302 @@
+@page
+@model TrainTicketSystem.Pages.Booking.CheckoutModel
+@{
+    ViewData["Title"] = "Xác nhận đặt vé";
+}
+
+<div class="checkout-wrapper">
+
+    <!-- ======== HEADER ======== -->
+    <div class="checkout-header">
+        <div class="checkout-header-icon">🎫</div>
+        <h1>Xác nhận & Thanh toán</h1>
+        <p>Kiểm tra thông tin và nhập thông tin hành khách trước khi thanh toán</p>
+    </div>
+
+    <div class="checkout-body">
+
+        <!-- ======== TRIP INFO CARD ======== -->
+        @if (Model.Schedule != null)
+        {
+            <div class="info-card">
+                <div class="info-card-title">🚂 Thông tin chuyến tàu</div>
+                <div class="trip-info-grid">
+                    <div class="trip-info-item">
+                        <span class="trip-label">Tàu</span>
+                        <span class="trip-value">@Model.Schedule.Train?.TrainName</span>
+                    </div>
+                    <div class="trip-info-item">
+                        <span class="trip-label">Tuyến</span>
+                        <span class="trip-value">@Model.Schedule.Route?.StartStation → @Model.Schedule.Route?.EndStation</span>
+                    </div>
+                    <div class="trip-info-item">
+                        <span class="trip-label">Khởi hành</span>
+                        <span class="trip-value">@Model.Schedule.DepartureTime?.ToString("HH:mm - dd/MM/yyyy")</span>
+                    </div>
+                    <div class="trip-info-item">
+                        <span class="trip-label">Đến nơi</span>
+                        <span class="trip-value">@Model.Schedule.ArrivalTime?.ToString("HH:mm - dd/MM/yyyy")</span>
+                    </div>
+                </div>
+            </div>
+        }
+
+        <!-- ======== PASSENGER FORM ======== -->
+        <form method="post" asp-page-handler="Pay">
+            <input type="hidden" asp-for="ScheduleId" />
+
+            <div class="info-card">
+                <div class="info-card-title">👤 Thông tin hành khách</div>
+                <p class="info-card-subtitle">Nhập thông tin cho từng ghế đã chọn</p>
+
+                @for (int i = 0; i < Model.SeatItems.Count; i++)
+                {
+                    var seat = Model.SeatItems[i];
+                    <div class="passenger-card">
+                        <div class="passenger-header">
+                            <div class="seat-badge">
+                                <span class="seat-icon">💺</span>
+                                <div>
+                                    <strong>Ghế @seat.SeatNumber</strong>
+                                    <span class="seat-type-tag">@seat.SeatType</span>
+                                </div>
+                            </div>
+                            <div class="seat-price">@seat.Price.ToString("N0") VNĐ</div>
+                        </div>
+
+                        <input type="hidden" name="Passengers[@i].SeatId" value="@seat.SeatId" />
+                        <div class="passenger-inputs">
+                            <div class="input-group">
+                                <label>Họ tên hành khách <span class="required">*</span></label>
+                                <input type="text"
+                                       name="Passengers[@i].Name"
+                                       placeholder="Nguyễn Văn A"
+                                       class="form-input"
+                                       required />
+                                <span asp-validation-for="@(Model.Passengers[i].Name)" class="field-error"></span>
+                            </div>
+                            <div class="input-group">
+                                <label>Số điện thoại <span class="required">*</span></label>
+                                <input type="tel"
+                                       name="Passengers[@i].Phone"
+                                       placeholder="0912345678"
+                                       class="form-input"
+                                       required />
+                                <span asp-validation-for="@(Model.Passengers[i].Phone)" class="field-error"></span>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+
+            <!-- ======== ORDER SUMMARY ======== -->
+            <div class="order-summary">
+                <div class="summary-row">
+                    <span>Số ghế</span>
+                    <span>@Model.SeatItems.Count ghế</span>
+                </div>
+                @foreach (var seat in Model.SeatItems)
+                {
+                    <div class="summary-row summary-seat">
+                        <span>Ghế @seat.SeatNumber (@seat.SeatType)</span>
+                        <span>@seat.Price.ToString("N0") VNĐ</span>
+                    </div>
+                }
+                <div class="summary-divider"></div>
+                <div class="summary-row summary-total">
+                    <span>💰 Tổng thanh toán</span>
+                    <span>@Model.TotalPrice.ToString("N0") VNĐ</span>
+                </div>
+            </div>
+
+            <!-- ======== ACTION BUTTONS ======== -->
+            <div class="checkout-actions">
+                <a href="/Booking/SeatMap?scheduleId=@Model.ScheduleId" class="btn-back">
+                    ← Quay lại chọn ghế
+                </a>
+                <button type="submit" class="btn-pay">
+                    <img src="https://sandbox.vnpayment.vn/images/icon/vnpay-logo.svg"
+                         alt="VNPay" onerror="this.style.display='none'"
+                         style="height:22px; margin-right:8px; vertical-align:middle;" />
+                    Thanh toán qua VNPay
+                </button>
+            </div>
+
+        </form>
+    </div>
+</div>
+
+<style>
+    .checkout-wrapper {
+        max-width: 760px;
+        margin: 2rem auto;
+        padding: 0 1rem 4rem;
+        font-family: 'Segoe UI', sans-serif;
+    }
+
+    /* --- Header --- */
+    .checkout-header {
+        text-align: center;
+        margin-bottom: 2rem;
+    }
+    .checkout-header-icon { font-size: 3rem; margin-bottom: .5rem; }
+    .checkout-header h1 {
+        font-size: 1.75rem;
+        font-weight: 700;
+        color: #1a1a2e;
+        margin: 0 0 .4rem;
+    }
+    .checkout-header p { color: #64748b; margin: 0; }
+
+    /* --- Cards --- */
+    .info-card {
+        background: #fff;
+        border-radius: 16px;
+        padding: 1.5rem;
+        margin-bottom: 1.25rem;
+        box-shadow: 0 2px 12px rgba(0,0,0,.07);
+        border: 1px solid #e2e8f0;
+    }
+    .info-card-title {
+        font-size: 1rem;
+        font-weight: 700;
+        color: #1a1a2e;
+        margin-bottom: 1rem;
+    }
+    .info-card-subtitle { color: #64748b; font-size: .875rem; margin: -.5rem 0 1rem; }
+
+    /* --- Trip grid --- */
+    .trip-info-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: .75rem;
+    }
+    .trip-info-item {
+        background: #f8fafc;
+        border-radius: 10px;
+        padding: .75rem 1rem;
+        display: flex;
+        flex-direction: column;
+        gap: .2rem;
+    }
+    .trip-label { font-size: .75rem; color: #94a3b8; text-transform: uppercase; letter-spacing: .04em; }
+    .trip-value { font-weight: 600; color: #1e293b; }
+
+    /* --- Passenger card --- */
+    .passenger-card {
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        padding: 1rem 1.25rem;
+        margin-bottom: 1rem;
+        background: #f8fafc;
+    }
+    .passenger-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: .875rem;
+    }
+    .seat-badge { display: flex; align-items: center; gap: .6rem; }
+    .seat-icon { font-size: 1.5rem; }
+    .seat-badge strong { display: block; color: #1e293b; }
+    .seat-type-tag {
+        display: inline-block;
+        background: #e0e7ff;
+        color: #4f46e5;
+        border-radius: 6px;
+        font-size: .72rem;
+        padding: .15rem .5rem;
+        font-weight: 600;
+        margin-top: .15rem;
+    }
+    .seat-price { font-weight: 700; color: #0ea5e9; font-size: 1rem; }
+
+    .passenger-inputs {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: .75rem;
+    }
+    .input-group { display: flex; flex-direction: column; gap: .3rem; }
+    .input-group label { font-size: .8rem; font-weight: 600; color: #475569; }
+    .required { color: #ef4444; }
+    .form-input {
+        padding: .6rem .875rem;
+        border: 1.5px solid #cbd5e1;
+        border-radius: 8px;
+        font-size: .9rem;
+        outline: none;
+        transition: border-color .2s;
+        background: #fff;
+    }
+    .form-input:focus { border-color: #6366f1; box-shadow: 0 0 0 3px #eef2ff; }
+    .field-error { color: #ef4444; font-size: .75rem; }
+
+    /* --- Order summary --- */
+    .order-summary {
+        background: #1e293b;
+        border-radius: 16px;
+        padding: 1.5rem;
+        margin-bottom: 1.25rem;
+        color: #e2e8f0;
+    }
+    .summary-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: .4rem 0;
+        font-size: .9rem;
+    }
+    .summary-seat { color: #94a3b8; font-size: .85rem; }
+    .summary-divider { border-top: 1px solid #334155; margin: .75rem 0; }
+    .summary-total {
+        font-size: 1.15rem;
+        font-weight: 700;
+        color: #38bdf8;
+    }
+
+    /* --- Actions --- */
+    .checkout-actions {
+        display: flex;
+        gap: 1rem;
+        justify-content: space-between;
+        align-items: center;
+    }
+    .btn-back {
+        padding: .7rem 1.4rem;
+        border: 1.5px solid #cbd5e1;
+        border-radius: 10px;
+        color: #64748b;
+        text-decoration: none;
+        font-weight: 600;
+        font-size: .9rem;
+        transition: all .2s;
+    }
+    .btn-back:hover { background: #f1f5f9; color: #1e293b; }
+    .btn-pay {
+        flex: 1;
+        padding: .85rem 2rem;
+        background: linear-gradient(135deg, #e53935, #b71c1c);
+        color: #fff;
+        border: none;
+        border-radius: 12px;
+        font-size: 1rem;
+        font-weight: 700;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: .5rem;
+        box-shadow: 0 4px 14px rgba(229,57,53,.35);
+        transition: all .2s;
+    }
+    .btn-pay:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(229,57,53,.45);
+    }
+
+    @@media (max-width: 600px) {
+        .trip-info-grid, .passenger-inputs { grid-template-columns: 1fr; }
+        .checkout-actions { flex-direction: column; }
+        .btn-back { text-align: center; }
+    }
+</style>

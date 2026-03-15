@@ -66,7 +66,7 @@
     </div>
 
     @* ── Countdown Banner ── *@
-    <div id="countdown-bar" class="countdown-bar d-none" role="alert">
+    <div id="countdown-bar" class="countdown-bar" style="display:none;" role="alert">
         <div class="countdown-inner">
             <div class="countdown-icon-wrap">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -299,8 +299,8 @@
     /* ── Route Hero ── */
     .route-hero {
         background: linear-gradient(135deg, var(--navy) 0%, #1E3A5F 60%, #1a4480 100%);
-        padding: 2.5rem 0 3rem;
-        margin-bottom: -1.5rem;
+        padding: 2.5rem 0 2.5rem;
+        margin-bottom: 0;
         position: relative;
         overflow: hidden;
     }
@@ -395,9 +395,10 @@
 
     /* ── Countdown ── */
     .countdown-bar {
-        background: linear-gradient(135deg, #92400E, #B45309);
-        padding: 12px 0;
-        box-shadow: var(--shadow-sm);
+        background: linear-gradient(135deg, #78350F, #B45309);
+        padding: 10px 0;
+        box-shadow: 0 3px 12px rgba(0,0,0,.25);
+        border-bottom: 1px solid rgba(255,255,255,0.1);
     }
     .countdown-inner {
         max-width: 900px;
@@ -405,41 +406,51 @@
         padding: 0 1.5rem;
         display: flex;
         align-items: center;
-        gap: 12px;
+        gap: 14px;
         color: white;
+        flex-wrap: nowrap;
     }
     .countdown-icon-wrap {
         flex-shrink: 0;
-        background: rgba(255,255,255,0.2);
+        background: rgba(255,255,255,0.15);
         border-radius: 50%;
         width: 36px; height: 36px;
         display: flex; align-items: center; justify-content: center;
+        border: 1px solid rgba(255,255,255,0.2);
     }
     .countdown-text {
         display: flex;
         flex-direction: column;
-        line-height: 1.2;
+        line-height: 1.25;
+        flex-shrink: 0;
     }
-    .countdown-text span { font-size: .75rem; opacity: .85; }
-    .countdown-text strong { font-size: 1.2rem; font-weight: 800; letter-spacing: -.02em; }
+    .countdown-text span { font-size: .72rem; opacity: .8; font-weight: 500; }
+    .countdown-text strong { font-size: 1.25rem; font-weight: 800; letter-spacing: -.02em; }
     .countdown-progress-wrap {
         flex: 1;
+        min-width: 80px;
         background: rgba(255,255,255,0.2);
-        border-radius: 4px;
-        height: 6px;
+        border-radius: 6px;
+        height: 8px;
         overflow: hidden;
     }
     .countdown-progress {
         height: 100%;
-        background: white;
-        border-radius: 4px;
+        background: linear-gradient(90deg, #FDE68A, #FBBF24);
+        border-radius: 6px;
         width: 100%;
         transition: width 1s linear;
     }
     .countdown-tip {
         font-size: .75rem;
-        opacity: .8;
+        opacity: .85;
         white-space: nowrap;
+        font-weight: 500;
+        flex-shrink: 0;
+    }
+    @@media (max-width: 600px) {
+        .countdown-tip { display: none; }
+        .countdown-inner { gap: 10px; }
     }
 
     /* ── Layout ── */
@@ -453,7 +464,10 @@
         align-items: start;
     }
     @@media (max-width: 768px) {
-        .seatmap-layout { grid-template-columns: 1fr; }
+        .seatmap-layout {
+            grid-template-columns: 1fr;
+            padding: 1.25rem 1rem 0;
+        }
     }
 
     /* ── Seat Map Panel ── */
@@ -927,7 +941,7 @@
         function startCountdown() {
             remainingSeconds = TOTAL_SECONDS;
             const bar = document.getElementById("countdown-bar");
-            bar.classList.remove("d-none");
+            bar.style.display = "block";
             countdownTimer = setInterval(() => {
                 remainingSeconds--;
                 const m = Math.floor(remainingSeconds / 60);
@@ -936,20 +950,27 @@
                 const pct = (remainingSeconds / TOTAL_SECONDS * 100).toFixed(1);
                 document.getElementById("countdown-progress").style.width = `${pct}%`;
 
+                // Turn bar red when < 2 min
+                if (remainingSeconds <= 120) {
+                    bar.style.background = "linear-gradient(135deg, #7F1D1D, #DC2626)";
+                }
+
                 if (remainingSeconds <= 0) {
                     clearInterval(countdownTimer); countdownTimer = null;
                     showToast("Hết thời gian giữ ghế! Vui lòng chọn lại.", "warning");
                     heldSeats.forEach(id => updateSeatButton(id, "available"));
                     heldSeats.clear();
                     updateSummary();
-                    document.getElementById("countdown-bar").classList.add("d-none");
+                    document.getElementById("countdown-bar").style.display = "none";
                 }
             }, 1000);
         }
 
         function stopCountdown() {
             if (countdownTimer) { clearInterval(countdownTimer); countdownTimer = null; }
-            document.getElementById("countdown-bar").classList.add("d-none");
+            const bar = document.getElementById("countdown-bar");
+            bar.style.display = "none";
+            bar.style.background = "";
         }
 
         // ── Checkout ─────────────────────────────────────────────
