@@ -1,0 +1,209 @@
+@page
+@model TrainTicketSystem.Pages.Tickets.IndexModel
+@{
+    ViewData["Title"] = "Booking Management";
+    Layout = "~/Pages/Shared/_AdminLayout.cshtml";
+}
+
+<div class="flex items-center justify-between mb-8">
+    <div>
+        <h1 class="text-3xl font-bold text-slate-900">Booking List</h1>
+    </div>
+</div>
+
+@* ── Filter bar ── *@
+<form method="get" class="flex flex-wrap gap-4 mb-6">
+    <div class="flex-1 min-w-[300px]">
+        <div class="relative">
+            <i data-lucide="search" class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-[18px] h-[18px]"></i>
+            <input type="text" name="SearchName" value="@Model.SearchName"
+                   placeholder="Search by customer name..."
+                   class="w-full pl-10 pr-4 py-2 border border-slate-300 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all shadow-sm" />
+        </div>
+    </div>
+
+    <button type="submit"
+            class="bg-slate-800 hover:bg-slate-900 text-white px-5 py-2 rounded-lg text-sm font-medium transition-colors shadow-sm">
+        Search
+    </button>
+
+    @if (!string.IsNullOrEmpty(Model.SearchName) || !string.IsNullOrEmpty(Model.StatusFilter))
+    {
+        <a href="/Tickets"
+           class="bg-red-50 hover:bg-red-100 border border-red-200 text-red-600 px-5 py-2 rounded-lg text-sm font-medium transition-colors flex items-center shadow-sm">
+            Clear
+        </a>
+    }
+
+    <select name="StatusFilter"
+            class="w-44 border border-slate-300 rounded-lg py-2 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-slate-700 shadow-sm">
+        <option value="">Filter by Status</option>
+        <option value="Paid"      selected="@(Model.StatusFilter == "Paid")">Paid</option>
+        <option value="Pending"   selected="@(Model.StatusFilter == "Pending")">Pending</option>
+        <option value="Cancelled" selected="@(Model.StatusFilter == "Cancelled")">Cancelled</option>
+    </select>
+</form>
+
+@* ── Table ── *@
+<div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+    <table class="w-full text-left border-collapse">
+        <thead>
+            <tr class="bg-slate-50 border-b border-slate-200">
+                <th class="py-4 px-6 font-semibold text-slate-700 text-sm">#ID</th>
+                <th class="py-4 px-6 font-semibold text-slate-700 text-sm">Customer</th>
+                <th class="py-4 px-6 font-semibold text-slate-700 text-sm">Route</th>
+                <th class="py-4 px-6 font-semibold text-slate-700 text-sm">Train</th>
+                <th class="py-4 px-6 font-semibold text-slate-700 text-sm">Departure</th>
+                <th class="py-4 px-6 font-semibold text-slate-700 text-sm">Booked On</th>
+                <th class="py-4 px-6 font-semibold text-slate-700 text-sm text-right">Total</th>
+                <th class="py-4 px-6 font-semibold text-slate-700 text-sm">Status</th>
+                <th class="py-4 px-6 font-semibold text-slate-700 text-sm text-center">Actions</th>
+            </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-200">
+            @if (Model.Bookings != null && Model.Bookings.Any())
+            {
+                @foreach (var b in Model.Bookings)
+                {
+                    var (badgeBg, badgeColor) = b.Status switch
+                        {
+                            "Paid"      => ("bg-green-100 border-green-200",  "text-green-700"),
+                            "Pending"   => ("bg-yellow-100 border-yellow-200", "text-yellow-700"),
+                            "Cancelled" => ("bg-red-100 border-red-200",       "text-red-700"),
+                            _           => ("bg-slate-100 border-slate-200",   "text-slate-700")
+                        };
+                    {
+                        
+                    }
+                    <tr class="hover:bg-slate-50 transition-colors">
+                        <td class="py-4 px-6 font-mono text-slate-500 text-sm">#@b.BookingId</td>
+                        <td class="py-4 px-6 font-medium text-slate-900">@b.FullName</td>
+                        <td class="py-4 px-6 text-slate-700 text-sm">@b.StartStation → @b.EndStation</td>
+                        <td class="py-4 px-6 text-slate-700">@b.TrainName</td>
+                        <td class="py-4 px-6 text-slate-700 text-sm">@b.DepartureTime.ToString("HH:mm dd/MM/yyyy")</td>
+                        <td class="py-4 px-6 text-slate-700 text-sm">@b.BookingDate.ToString("dd/MM/yyyy")</td>
+                        <td class="py-4 px-6 text-right font-semibold text-slate-900">@b.TotalPrice.ToString("N0") ₫</td>
+                        <td class="py-4 px-6">
+                            <span class="px-3 py-1 rounded-full text-xs font-semibold border @badgeBg @badgeColor">
+                                @b.Status
+                            </span>
+                        </td>
+                        <td class="py-4 px-6 text-center">
+                            <div class="inline-flex items-center justify-center gap-2">
+                                <!-- View detail -->
+                                <a asp-page="Details" asp-route-id="@b.BookingId"
+                                   class="text-blue-500 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 p-2 rounded-lg transition-colors"
+                                   title="View Detail">
+                                    <i data-lucide="eye" class="w-[18px] h-[18px]"></i>
+                                </a>
+
+                                @if (b.Status == "Pending")
+                                {
+                                    <!-- Confirm Payment -->
+                                    <button onclick="openConfirmModal(@b.BookingId, 'Paid')"
+                                            class="text-green-500 hover:text-green-700 bg-green-50 hover:bg-green-100 p-2 rounded-lg transition-colors"
+                                            title="Confirm Payment">
+                                        <i data-lucide="check-circle" class="w-[18px] h-[18px]"></i>
+                                    </button>
+
+                                    <!-- Cancel -->
+                                    <button onclick="openConfirmModal(@b.BookingId, 'Cancelled')"
+                                            class="text-red-500 hover:text-red-700 bg-red-50 hover:bg-red-100 p-2 rounded-lg transition-colors"
+                                            title="Cancel Booking">
+                                        <i data-lucide="x-circle" class="w-[18px] h-[18px]"></i>
+                                    </button>
+                                }
+                            </div>
+                        </td>
+                    </tr>
+                }
+            }
+            else
+            {
+                <tr>
+                    <td colspan="9" class="py-10 text-center text-slate-500">
+                        <div class="flex flex-col items-center justify-center">
+                            <i data-lucide="ticket" class="w-10 h-10 text-slate-300 mb-2"></i>
+                            <p>No bookings found matching your criteria.</p>
+                        </div>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+
+    <div class="px-6 py-4 border-t border-slate-200 bg-white">
+        <p class="text-sm text-slate-600">
+            Showing <span class="font-semibold">@Model.Bookings.Count</span> booking(s)
+        </p>
+    </div>
+</div>
+
+@* ── Confirm Status Modal ── *@
+<div id="confirmModal" class="fixed inset-0 bg-slate-900/50 hidden items-center justify-center z-50 backdrop-blur-sm">
+    <div class="bg-white rounded-xl shadow-lg w-full max-w-md p-6 text-center">
+        <div id="confirmIconWrap" class="mx-auto flex items-center justify-center h-14 w-14 rounded-full mb-4">
+            <i id="confirmIcon" class="h-7 w-7"></i>
+        </div>
+        <h2 id="confirmTitle" class="text-xl font-bold text-slate-900 mb-2"></h2>
+        <p id="confirmMessage" class="text-sm text-slate-500 mb-6"></p>
+
+        <form method="post" asp-page-handler="UpdateStatus">
+            <input type="hidden" name="bookingId" id="confirmBookingId" />
+            <input type="hidden" name="newStatus" id="confirmNewStatus" />
+            <div class="flex justify-center gap-3">
+                <button type="button" onclick="closeModal('confirmModal')"
+                        class="px-4 py-2 text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-lg font-medium transition-colors w-1/2">
+                    Cancel
+                </button>
+                <button type="submit" id="confirmSubmitBtn"
+                        class="px-4 py-2 text-white rounded-lg font-medium transition-colors shadow-sm w-1/2">
+                    Confirm
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    function openModal(id) {
+        document.getElementById(id).classList.remove('hidden');
+        document.getElementById(id).classList.add('flex');
+    }
+
+    function closeModal(id) {
+        document.getElementById(id).classList.add('hidden');
+        document.getElementById(id).classList.remove('flex');
+    }
+
+    function openConfirmModal(bookingId, newStatus) {
+        document.getElementById('confirmBookingId').value = bookingId;
+        document.getElementById('confirmNewStatus').value = newStatus;
+
+        const iconWrap = document.getElementById('confirmIconWrap');
+        const icon     = document.getElementById('confirmIcon');
+        const title    = document.getElementById('confirmTitle');
+        const message  = document.getElementById('confirmMessage');
+        const btn      = document.getElementById('confirmSubmitBtn');
+
+        if (newStatus === 'Paid') {
+            iconWrap.className = 'mx-auto flex items-center justify-center h-14 w-14 rounded-full mb-4 bg-green-100';
+            icon.setAttribute('data-lucide', 'check-circle');
+            icon.className = 'h-7 w-7 text-green-600';
+            title.textContent   = 'Confirm Payment?';
+            message.textContent = `Mark booking #${bookingId} as Paid?`;
+            btn.className       = 'px-4 py-2 text-white bg-green-600 hover:bg-green-700 rounded-lg font-medium transition-colors shadow-sm w-1/2';
+        } else {
+            iconWrap.className = 'mx-auto flex items-center justify-center h-14 w-14 rounded-full mb-4 bg-red-100';
+            icon.setAttribute('data-lucide', 'alert-triangle');
+            icon.className = 'h-7 w-7 text-red-600';
+            title.textContent   = 'Cancel Booking?';
+            message.textContent = `Cancel booking #${bookingId}? This cannot be undone.`;
+            btn.className       = 'px-4 py-2 text-white bg-red-600 hover:bg-red-700 rounded-lg font-medium transition-colors shadow-sm w-1/2';
+        }
+
+        // Re-render lucide icons sau khi đổi data-lucide attribute
+        lucide.createIcons();
+        openModal('confirmModal');
+    }
+</script>
