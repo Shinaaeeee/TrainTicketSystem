@@ -14,6 +14,7 @@ public partial class Schedule
     public DateTime? DepartureTime { get; set; }
 
     public DateTime? ArrivalTime { get; set; }
+    public decimal? Price { get; set; }
 
     public virtual ICollection<Booking> Bookings { get; set; } = new List<Booking>();
 
