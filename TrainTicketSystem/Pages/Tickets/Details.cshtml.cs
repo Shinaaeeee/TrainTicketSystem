@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.Data.SqlClient;
 using TrainTicketSystem.Models;
 
-namespace TrainTicketSystem.Pages.Admin.Bookings
+namespace TrainTicketSystem.Pages.Tickets
 {
     public class DetailsModel : PageModel
     {

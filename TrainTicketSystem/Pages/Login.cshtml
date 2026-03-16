@@ -58,6 +58,12 @@
                             @TempData["SuccessMessage"]
                         </div>
                     }
+                    @if (TempData["Message"] != null)
+                    {
+                        <div class="alert alert-warning text-center">
+                            @TempData["Message"]
+                        </div>
+                    }
                 </div>
 
             </div>
