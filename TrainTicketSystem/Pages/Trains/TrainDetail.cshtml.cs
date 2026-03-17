@@ -44,7 +44,7 @@ namespace TrainTicketSystem.Pages.Trains
                 return RedirectToPage(new { id = scheduleId });
             }
 
-            var booking = new Booking
+            var booking = new Models.Booking
             {
                 UserId = userId,
                 BookingDate = DateTime.Now,
