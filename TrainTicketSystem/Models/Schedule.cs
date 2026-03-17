@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 
 namespace TrainTicketSystem.Models;
@@ -15,6 +15,8 @@ public partial class Schedule
 
     public DateTime? ArrivalTime { get; set; }
     public decimal? Price { get; set; }
+
+    public decimal Price { get; set; } = 100_000m;
 
     public virtual ICollection<Booking> Bookings { get; set; } = new List<Booking>();
 
