@@ -16,8 +16,6 @@ public partial class Schedule
     public DateTime? ArrivalTime { get; set; }
     public decimal? Price { get; set; }
 
-    public decimal Price { get; set; } = 100_000m;
-
     public virtual ICollection<Booking> Bookings { get; set; } = new List<Booking>();
 
     public virtual Route? Route { get; set; }
