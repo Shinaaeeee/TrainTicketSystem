@@ -26,7 +26,6 @@ namespace TrainTicketSystem.Pages.Revenue
         {
             var connStr = _config.GetConnectionString("MyCnn");
 
-            // Normalize: ToDate bao gồm toàn bộ ngày cuối (23:59:59)
             var from = FromDate?.Date;
             var to = ToDate?.Date.AddDays(1).AddTicks(-1);
 
@@ -36,15 +35,24 @@ namespace TrainTicketSystem.Pages.Revenue
             await using var conn = new SqlConnection(connStr);
             await conn.OpenAsync();
 
-            // ── Query 1: Summary ─────────────────────────────────────────
-            // Dùng LEFT JOIN Payment để TotalRevenue đồng nhất với cùng
-            // tập Booking được lọc (tránh mismatch BookingDate vs PaymentDate)
+            // ── Query 1: Summary ──────────────────────────────────────────────────────
+            // Sau DB update: Payment có cột Status riêng ('Pending'|'Paid'|'Failed').
+            // → PaidCount/TotalRevenue dựa trên Payment.Status = 'Paid' thay vì Booking.Status.
+            // → PendingCount = các Booking chưa có Payment thành công
+            //   (Booking.Status = 'Pending' OR Payment chưa tồn tại / Payment.Status != 'Paid').
             const string summarySql = @"
                 SELECT
-                    COUNT(b.BookingId)                                              AS TotalBookings,
-                    SUM(CASE WHEN b.Status = 'Paid'    THEN 1 ELSE 0 END)         AS PaidCount,
-                    SUM(CASE WHEN b.Status = 'Pending' THEN 1 ELSE 0 END)         AS PendingCount,
-                    ISNULL(SUM(CASE WHEN b.Status = 'Paid' THEN p.Amount END), 0) AS TotalRevenue
+                    COUNT(DISTINCT b.BookingId)                                                AS TotalBookings,
+
+                    -- Paid: booking đã có payment thành công
+                    COUNT(DISTINCT CASE WHEN p.Status = 'Paid'    THEN b.BookingId END)       AS PaidCount,
+
+                    -- Pending: booking chưa có payment hoặc payment chưa hoàn tất
+                    COUNT(DISTINCT CASE WHEN p.Status IS NULL
+                                          OR p.Status != 'Paid'   THEN b.BookingId END)       AS PendingCount,
+
+                    -- Chỉ tính tiền từ payment đã được xác nhận
+                    ISNULL(SUM(CASE WHEN p.Status = 'Paid' THEN p.Amount END), 0)             AS TotalRevenue
                 FROM Booking b
                 LEFT JOIN Payment p ON p.BookingId = b.BookingId
                 WHERE (@From IS NULL OR b.BookingDate >= @From)
@@ -65,13 +73,14 @@ namespace TrainTicketSystem.Pages.Revenue
                 }
             }
 
-            // ── Query 2: Revenue by Route ─────────────────────────────────
+            // ── Query 2: Revenue by Route ─────────────────────────────────────────────
+            // Tương tự: dùng Payment.Status = 'Paid' thay vì Booking.Status
             const string routeSql = @"
                 SELECT
                     r.StartStation,
                     r.EndStation,
-                    COUNT(DISTINCT b.BookingId)                                AS TotalBookings,
-                    ISNULL(SUM(CASE WHEN b.Status = 'Paid' THEN p.Amount END), 0) AS TotalRevenue
+                    COUNT(DISTINCT b.BookingId)                                                AS TotalBookings,
+                    ISNULL(SUM(CASE WHEN p.Status = 'Paid' THEN p.Amount END), 0)             AS TotalRevenue
                 FROM Booking b
                 JOIN Schedule sc ON b.ScheduleId = sc.ScheduleId
                 JOIN Route    r  ON sc.RouteId   = r.RouteId
@@ -99,8 +108,9 @@ namespace TrainTicketSystem.Pages.Revenue
                 }
             }
 
-            // ── Query 3: Revenue by Month ─────────────────────────────────
-            // Dựa trên PaymentDate vì đây là thời điểm tiền thực sự về
+            // ── Query 3: Revenue by Month ─────────────────────────────────────────────
+            // Thêm filter Payment.Status = 'Paid' để chỉ tính các giao dịch hoàn tất.
+            // Trước đây thiếu điều kiện này → có thể tính cả payment Failed/Pending.
             const string monthSql = @"
                 SELECT
                     YEAR(p.PaymentDate)  AS Year,
@@ -109,7 +119,8 @@ namespace TrainTicketSystem.Pages.Revenue
                     SUM(p.Amount)        AS TotalRevenue
                 FROM Payment p
                 JOIN Booking b ON b.BookingId = p.BookingId
-                WHERE (@From IS NULL OR b.BookingDate >= @From)
+                WHERE p.Status = 'Paid'
+                  AND (@From IS NULL OR b.BookingDate >= @From)
                   AND (@To   IS NULL OR b.BookingDate <= @To)
                 GROUP BY YEAR(p.PaymentDate), MONTH(p.PaymentDate)
                 ORDER BY Year DESC, Month DESC";

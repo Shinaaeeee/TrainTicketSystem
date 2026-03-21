@@ -11,11 +11,13 @@ public class CheckoutModel : PageModel
 {
     private readonly TrainTicketDbContext _context;
     private readonly VnpayService _vnpay;
+    private readonly decimal _defaultBasePrice;
 
-    public CheckoutModel(TrainTicketDbContext context, VnpayService vnpay)
+    public CheckoutModel(TrainTicketDbContext context, VnpayService vnpay, IConfiguration config)
     {
         _context = context;
         _vnpay = vnpay;
+        _defaultBasePrice = config.GetValue<decimal>("Booking:DefaultBasePrice", 100_000m);
     }
 
     // ---- Display data ----
@@ -55,13 +57,13 @@ public class CheckoutModel : PageModel
             .Where(s => seatIds.Contains(s.SeatId))
             .ToListAsync();
 
-        const decimal BasePrice = 100_000m;
+        decimal basePrice = Schedule?.Price ?? _defaultBasePrice; // lấy giá base từ Schedule
         SeatItems = rawSeats.Select(s => new SeatCheckoutItem
         {
             SeatId     = s.SeatId,
             SeatNumber = s.SeatNumber ?? "",
             SeatType   = s.SeatType?.TypeName ?? "Thường",
-            Price      = BasePrice * (s.SeatType?.PriceMultiplier ?? 1m)
+            Price      = basePrice * (s.SeatType?.PriceMultiplier ?? 1m)
         }).ToList();
 
         TotalPrice = SeatItems.Sum(x => x.Price);
@@ -93,7 +95,9 @@ public class CheckoutModel : PageModel
             .Where(s => seatIds.Contains(s.SeatId))
             .ToListAsync();
 
-        decimal total = seats.Sum(s => 100000m * (s.SeatType?.PriceMultiplier ?? 1m));
+        var schedule = await _context.Schedules.FindAsync(ScheduleId);
+        decimal basePrice = schedule?.Price ?? _defaultBasePrice;
+        decimal total = seats.Sum(s => basePrice * (s.SeatType?.PriceMultiplier ?? 1m));
 
         // 2. Create Booking with Pending status
         var booking = new Models.Booking
@@ -117,7 +121,7 @@ public class CheckoutModel : PageModel
             {
                 BookingId      = booking.BookingId,
                 SeatId         = passenger.SeatId,
-                Price          = 100000m * (seat.SeatType?.PriceMultiplier ?? 1m),
+                Price          = basePrice * (seat.SeatType?.PriceMultiplier ?? 1m),
                 PassengerName  = passenger.Name,
                 PassengerPhone = passenger.Phone
             });
@@ -162,7 +166,7 @@ public class CheckoutModel : PageModel
             .FirstOrDefaultAsync(s => s.ScheduleId == ScheduleId);
 
         var seatIds = Passengers.Select(p => p.SeatId).ToList();
-        const decimal BasePrice = 100_000m;
+        decimal basePrice = Schedule?.Price ?? _defaultBasePrice; // lấy giá base từ Schedule
         var rawSeats = await _context.Seats
             .Include(s => s.SeatType)
             .Where(s => seatIds.Contains(s.SeatId))
@@ -173,7 +177,7 @@ public class CheckoutModel : PageModel
             SeatId     = s.SeatId,
             SeatNumber = s.SeatNumber ?? "",
             SeatType   = s.SeatType?.TypeName ?? "Thường",
-            Price      = BasePrice * (s.SeatType?.PriceMultiplier ?? 1m)
+            Price      = basePrice * (s.SeatType?.PriceMultiplier ?? 1m)
         }).ToList();
 
         TotalPrice = SeatItems.Sum(x => x.Price);
