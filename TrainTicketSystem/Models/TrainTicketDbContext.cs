@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
 
@@ -34,16 +34,13 @@ public partial class TrainTicketDbContext : DbContext
     public virtual DbSet<User> Users { get; set; }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-    {
-        var config = new ConfigurationBuilder().AddJsonFile("appsettings.json").Build();
+        => optionsBuilder.UseSqlServer("Data Source=NMINH;Initial Catalog=TrainTicketDB;Integrated Security=True;Encrypt=false;TrustServerCertificate=true;");
 
-        if (!optionsBuilder.IsConfigured) { optionsBuilder.UseSqlServer(config.GetConnectionString("MyCnn")); }
-    }
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<Booking>(entity =>
         {
-            entity.HasKey(e => e.BookingId).HasName("PK__Booking__73951AED16E837BF");
+            entity.HasKey(e => e.BookingId).HasName("PK__Booking__73951AED44F6A3F0");
 
             entity.ToTable("Booking");
 
@@ -53,48 +50,53 @@ public partial class TrainTicketDbContext : DbContext
 
             entity.HasOne(d => d.Schedule).WithMany(p => p.Bookings)
                 .HasForeignKey(d => d.ScheduleId)
-                .HasConstraintName("FK__Booking__Schedul__59FA5E80");
+                .HasConstraintName("FK__Booking__Schedul__47DBAE45");
 
             entity.HasOne(d => d.User).WithMany(p => p.Bookings)
                 .HasForeignKey(d => d.UserId)
-                .HasConstraintName("FK__Booking__UserId__59063A47");
+                .HasConstraintName("FK__Booking__UserId__46E78A0C");
         });
 
         modelBuilder.Entity<BookingDetail>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK__BookingD__3214EC07F228D001");
+            entity.HasKey(e => e.Id).HasName("PK__BookingD__3214EC0766CC2177");
 
             entity.ToTable("BookingDetail");
 
+            entity.Property(e => e.PassengerName).HasMaxLength(100);
+            entity.Property(e => e.PassengerPhone).HasMaxLength(20);
             entity.Property(e => e.Price).HasColumnType("decimal(10, 2)");
 
             entity.HasOne(d => d.Booking).WithMany(p => p.BookingDetails)
                 .HasForeignKey(d => d.BookingId)
-                .HasConstraintName("FK__BookingDe__Booki__5CD6CB2B");
+                .HasConstraintName("FK__BookingDe__Booki__4AB81AF0");
 
             entity.HasOne(d => d.Seat).WithMany(p => p.BookingDetails)
                 .HasForeignKey(d => d.SeatId)
-                .HasConstraintName("FK__BookingDe__SeatI__5DCAEF64");
+                .HasConstraintName("FK__BookingDe__SeatI__4BAC3F29");
         });
 
         modelBuilder.Entity<Payment>(entity =>
         {
-            entity.HasKey(e => e.PaymentId).HasName("PK__Payment__9B556A38042688A8");
+            entity.HasKey(e => e.PaymentId).HasName("PK__Payment__9B556A38542702BB");
 
             entity.ToTable("Payment");
 
             entity.Property(e => e.Amount).HasColumnType("decimal(10, 2)");
             entity.Property(e => e.PaymentDate).HasColumnType("datetime");
             entity.Property(e => e.PaymentMethod).HasMaxLength(50);
+            entity.Property(e => e.Status).HasMaxLength(50);
+            entity.Property(e => e.VnpayOrderInfo).HasMaxLength(255);
+            entity.Property(e => e.VnpayTransactionId).HasMaxLength(100);
 
             entity.HasOne(d => d.Booking).WithMany(p => p.Payments)
                 .HasForeignKey(d => d.BookingId)
-                .HasConstraintName("FK__Payment__Booking__60A75C0F");
+                .HasConstraintName("FK__Payment__Booking__4E88ABD4");
         });
 
         modelBuilder.Entity<Route>(entity =>
         {
-            entity.HasKey(e => e.RouteId).HasName("PK__Route__80979B4DE2CD175D");
+            entity.HasKey(e => e.RouteId).HasName("PK__Route__80979B4D3D9D2FBF");
 
             entity.ToTable("Route");
 
@@ -104,42 +106,45 @@ public partial class TrainTicketDbContext : DbContext
 
         modelBuilder.Entity<Schedule>(entity =>
         {
-            entity.HasKey(e => e.ScheduleId).HasName("PK__Schedule__9C8A5B49E96FCC1F");
+            entity.HasKey(e => e.ScheduleId).HasName("PK__Schedule__9C8A5B490DB3683B");
 
             entity.ToTable("Schedule");
 
             entity.Property(e => e.ArrivalTime).HasColumnType("datetime");
             entity.Property(e => e.DepartureTime).HasColumnType("datetime");
+            entity.Property(e => e.Price).HasColumnType("decimal(10, 2)");
 
             entity.HasOne(d => d.Route).WithMany(p => p.Schedules)
                 .HasForeignKey(d => d.RouteId)
-                .HasConstraintName("FK__Schedule__RouteI__5070F446");
+                .HasConstraintName("FK__Schedule__RouteI__3E52440B");
 
             entity.HasOne(d => d.Train).WithMany(p => p.Schedules)
                 .HasForeignKey(d => d.TrainId)
-                .HasConstraintName("FK__Schedule__TrainI__4F7CD00D");
+                .HasConstraintName("FK__Schedule__TrainI__3D5E1FD2");
         });
 
         modelBuilder.Entity<Seat>(entity =>
         {
-            entity.HasKey(e => e.SeatId).HasName("PK__Seat__311713F374227803");
+            entity.HasKey(e => e.SeatId).HasName("PK__Seat__311713F352487151");
 
             entity.ToTable("Seat");
 
+            entity.Property(e => e.HoldExpiredAt).HasColumnType("datetime");
+            entity.Property(e => e.SeatHoldStatus).HasMaxLength(20);
             entity.Property(e => e.SeatNumber).HasMaxLength(10);
 
             entity.HasOne(d => d.SeatType).WithMany(p => p.Seats)
                 .HasForeignKey(d => d.SeatTypeId)
-                .HasConstraintName("FK__Seat__SeatTypeId__5629CD9C");
+                .HasConstraintName("FK__Seat__SeatTypeId__440B1D61");
 
             entity.HasOne(d => d.Train).WithMany(p => p.Seats)
                 .HasForeignKey(d => d.TrainId)
-                .HasConstraintName("FK__Seat__TrainId__5535A963");
+                .HasConstraintName("FK__Seat__TrainId__4316F928");
         });
 
         modelBuilder.Entity<SeatType>(entity =>
         {
-            entity.HasKey(e => e.SeatTypeId).HasName("PK__SeatType__7468C4FEB40E824F");
+            entity.HasKey(e => e.SeatTypeId).HasName("PK__SeatType__7468C4FE78CA8020");
 
             entity.ToTable("SeatType");
 
@@ -149,7 +154,7 @@ public partial class TrainTicketDbContext : DbContext
 
         modelBuilder.Entity<Train>(entity =>
         {
-            entity.HasKey(e => e.TrainId).HasName("PK__Train__8ED2723A33DB6CCF");
+            entity.HasKey(e => e.TrainId).HasName("PK__Train__8ED2723AA1A5EE31");
 
             entity.ToTable("Train");
 
@@ -158,7 +163,7 @@ public partial class TrainTicketDbContext : DbContext
 
         modelBuilder.Entity<User>(entity =>
         {
-            entity.HasKey(e => e.UserId).HasName("PK__Users__1788CC4CA3E28E6C");
+            entity.HasKey(e => e.UserId).HasName("PK__Users__1788CC4C560B30C6");
 
             entity.Property(e => e.Email).HasMaxLength(100);
             entity.Property(e => e.FullName).HasMaxLength(100);

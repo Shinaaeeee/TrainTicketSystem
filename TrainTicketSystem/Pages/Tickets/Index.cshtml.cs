@@ -75,10 +75,9 @@ namespace TrainTicketSystem.Pages.Tickets
 
         public async Task<IActionResult> OnPostUpdateStatusAsync(int bookingId, string newStatus)
         {
-            // ✅ Fix: dùng "MyCnn" thay vì "DefaultConnection" (không tồn tại)
             var connStr = _config.GetConnectionString("MyCnn");
 
-            var allowed = new[] { "Paid", "Pending", "Cancelled" };
+            var allowed = new[] { "Paid", "Cancelled" };
             if (!allowed.Contains(newStatus))
                 return BadRequest("Invalid status value.");
 
