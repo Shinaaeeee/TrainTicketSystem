@@ -34,7 +34,12 @@ public partial class TrainTicketDbContext : DbContext
     public virtual DbSet<User> Users { get; set; }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-        => optionsBuilder.UseSqlServer("Data Source=NMINH;Initial Catalog=TrainTicketDB;Integrated Security=True;Encrypt=false;TrustServerCertificate=true;");
+        // => optionsBuilder.UseSqlServer(Configuration["ConnectionStrings:MyCnn"]);
+        {
+            var config = new ConfigurationBuilder().AddJsonFile("appsettings.json").Build();
+
+            if (!optionsBuilder.IsConfigured) { optionsBuilder.UseSqlServer(config.GetConnectionString("MyCnn")); }
+        }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

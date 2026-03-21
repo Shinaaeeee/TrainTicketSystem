@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - VNR Train</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/TrainTicketSystem.styles.css" asp-append-version="true" />
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <style>
+        /* ══════════ Customer Layout Design System ══════════ */
+        :root {
+            --c-navy: #0F172A;
+            --c-navy-800: #1E293B;
+            --c-navy-700: #334155;
+            --c-blue: #3B82F6;
+            --c-blue-600: #2563EB;
+            --c-blue-700: #1D4ED8;
+            --c-blue-50: #EFF6FF;
+            --c-slate-50: #F8FAFC;
+            --c-slate-100: #F1F5F9;
+            --c-slate-200: #E2E8F0;
+            --c-slate-300: #CBD5E1;
+            --c-slate-400: #94A3B8;
+            --c-slate-500: #64748B;
+            --c-slate-600: #475569;
+            --c-emerald: #10B981;
+            --c-white: #FFFFFF;
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            margin: 0;
+            padding: 0;
+            background: var(--c-slate-50);
+            color: var(--c-navy);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* ── Navbar ── */
+        .c-navbar {
+            background: var(--c-navy);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 1px 3px rgba(0,0,0,.2);
+        }
+
+        .c-navbar-inner {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 1.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            height: 64px;
+        }
+
+        .c-brand {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            text-decoration: none;
+            color: white;
+            font-weight: 800;
+            font-size: 1.15rem;
+            letter-spacing: -.02em;
+        }
+
+        .c-brand-icon {
+            width: 36px;
+            height: 36px;
+            background: var(--c-blue);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .c-brand:hover { color: white; text-decoration: none; }
+
+        /* Nav links */
+        .c-nav-links {
+            display: flex;
+            align-items: center;
+            gap: 2px;
+            list-style: none;
+            margin: 0;
+            padding: 0;
+        }
+
+        .c-nav-link {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 16px;
+            border-radius: 8px;
+            color: rgba(255,255,255,.7);
+            text-decoration: none;
+            font-size: .875rem;
+            font-weight: 500;
+            transition: all .15s ease;
+            white-space: nowrap;
+        }
+
+        .c-nav-link:hover {
+            background: rgba(255,255,255,.1);
+            color: white;
+            text-decoration: none;
+        }
+
+        .c-nav-link.active {
+            background: var(--c-blue);
+            color: white;
+        }
+
+        /* Nav right */
+        .c-nav-right {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .c-user-btn {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 14px;
+            border-radius: 8px;
+            background: rgba(255,255,255,.1);
+            border: 1px solid rgba(255,255,255,.15);
+            color: white;
+            font-size: .875rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all .15s ease;
+            text-decoration: none;
+        }
+
+        .c-user-btn:hover {
+            background: rgba(255,255,255,.18);
+            color: white;
+            text-decoration: none;
+        }
+
+        .c-user-avatar {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background: var(--c-blue);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: .75rem;
+            color: white;
+        }
+
+        .c-login-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 20px;
+            border-radius: 8px;
+            background: var(--c-blue);
+            color: white;
+            font-size: .875rem;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all .15s ease;
+            border: none;
+        }
+
+        .c-login-btn:hover {
+            background: var(--c-blue-600);
+            color: white;
+            text-decoration: none;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(59,130,246,.3);
+        }
+
+        /* Dropdown */
+        .c-dropdown {
+            position: relative;
+        }
+
+        .c-dropdown-menu {
+            position: absolute;
+            top: calc(100% + 8px);
+            right: 0;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0,0,0,.15), 0 2px 6px rgba(0,0,0,.08);
+            border: 1px solid var(--c-slate-200);
+            min-width: 200px;
+            padding: 6px;
+            display: none;
+            z-index: 200;
+            animation: dropIn .15s ease;
+        }
+
+        .c-dropdown.open .c-dropdown-menu {
+            display: block;
+        }
+
+        @@keyframes dropIn {
+            from { opacity: 0; transform: translateY(-6px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .c-dropdown-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 14px;
+            border-radius: 8px;
+            color: var(--c-navy-700);
+            text-decoration: none;
+            font-size: .875rem;
+            font-weight: 500;
+            transition: background .1s;
+        }
+
+        .c-dropdown-item:hover {
+            background: var(--c-slate-50);
+            color: var(--c-navy);
+            text-decoration: none;
+        }
+
+        .c-dropdown-divider {
+            height: 1px;
+            background: var(--c-slate-100);
+            margin: 4px 0;
+        }
+
+        .c-dropdown-item.danger {
+            color: #DC2626;
+        }
+
+        .c-dropdown-item.danger:hover {
+            background: #FEF2F2;
+        }
+
+        /* ── Main content ── */
+        .c-main {
+            flex: 1;
+            padding: 0;
+        }
+
+        /* ── Footer ── */
+        .c-footer {
+            background: var(--c-navy);
+            color: rgba(255,255,255,.5);
+            padding: 1.5rem 0;
+            margin-top: auto;
+        }
+
+        .c-footer-inner {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 1.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: .8rem;
+        }
+
+        .c-footer a {
+            color: rgba(255,255,255,.6);
+            text-decoration: none;
+            transition: color .15s;
+        }
+
+        .c-footer a:hover {
+            color: white;
+        }
+
+        /* ── Mobile Toggle ── */
+        .c-mobile-toggle {
+            display: none;
+            background: none;
+            border: none;
+            color: white;
+            cursor: pointer;
+            padding: 4px;
+        }
+
+        @@media (max-width: 768px) {
+            .c-mobile-toggle { display: flex; }
+
+            .c-nav-links {
+                display: none;
+                position: absolute;
+                top: 64px;
+                left: 0;
+                right: 0;
+                background: var(--c-navy-800);
+                flex-direction: column;
+                padding: 8px 12px;
+                border-bottom: 1px solid rgba(255,255,255,.1);
+                gap: 2px;
+            }
+
+            .c-nav-links.mobile-open {
+                display: flex;
+            }
+
+            .c-nav-link {
+                width: 100%;
+                padding: 12px 16px;
+            }
+
+            .c-footer-inner {
+                flex-direction: column;
+                gap: 8px;
+                text-align: center;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    @{
+        var currentPage = Context.Request.Path.ToString();
+        var username = Context.Session.GetString("Username");
+        var userInitial = !string.IsNullOrEmpty(username) ? username[0].ToString().ToUpper() : "?";
+    }
+
+    <!-- ═══ Navbar ═══ -->
+    <nav class="c-navbar">
+        <div class="c-navbar-inner" style="position: relative;">
+
+            <!-- Brand -->
+            <a href="/" class="c-brand">
+                <span class="c-brand-icon">
+                    <i data-lucide="train-front" class="text-white" style="width:20px;height:20px;"></i>
+                </span>
+                VNR Train
+            </a>
+
+            <!-- Mobile Toggle -->
+            <button class="c-mobile-toggle" onclick="document.querySelector('.c-nav-links').classList.toggle('mobile-open')">
+                <i data-lucide="menu" style="width:24px;height:24px;"></i>
+            </button>
+
+            <!-- Nav Links -->
+            <ul class="c-nav-links">
+                <li>
+                    <a href="/" class="c-nav-link @(currentPage == "/" || currentPage == "/Index" ? "active" : "")">
+                        <i data-lucide="search" style="width:16px;height:16px;"></i>
+                        Tìm vé
+                    </a>
+                </li>
+                @if (username != null)
+                {
+                    <li>
+                        <a href="/MyTickets" class="c-nav-link @(currentPage.Contains("/MyTickets") ? "active" : "")">
+                            <i data-lucide="ticket" style="width:16px;height:16px;"></i>
+                            Vé của tôi
+                        </a>
+                    </li>
+                }
+            </ul>
+
+            <!-- Nav Right -->
+            <div class="c-nav-right">
+                @if (username == null)
+                {
+                    <a href="/Login" class="c-login-btn">
+                        <i data-lucide="log-in" style="width:16px;height:16px;"></i>
+                        Đăng nhập
+                    </a>
+                }
+                else
+                {
+                    <div class="c-dropdown" id="userDropdown">
+                        <button class="c-user-btn" onclick="toggleDropdown()">
+                            <span class="c-user-avatar">@userInitial</span>
+                            <span>@username</span>
+                            <i data-lucide="chevron-down" style="width:14px;height:14px;opacity:.7;"></i>
+                        </button>
+
+                        <div class="c-dropdown-menu">
+                            <a href="/MyTickets" class="c-dropdown-item">
+                                <i data-lucide="ticket" style="width:16px;height:16px;color:var(--c-slate-400);"></i>
+                                Vé của tôi
+                            </a>
+                            <a href="/User/Changeprofile" class="c-dropdown-item">
+                                <i data-lucide="user-cog" style="width:16px;height:16px;color:var(--c-slate-400);"></i>
+                                Đổi thông tin
+                            </a>
+                            <div class="c-dropdown-divider"></div>
+                            <a href="/Logout" class="c-dropdown-item danger">
+                                <i data-lucide="log-out" style="width:16px;height:16px;"></i>
+                                Đăng xuất
+                            </a>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+    </nav>
+
+    <!-- ═══ Main Content ═══ -->
+    <main class="c-main">
+        @RenderBody()
+    </main>
+
+    <!-- ═══ Footer ═══ -->
+    <footer class="c-footer">
+        <div class="c-footer-inner">
+            <span>&copy; 2026 VNR Train — Hệ thống đặt vé tàu trực tuyến</span>
+            <div style="display:flex; gap:16px;">
+                <a href="/Privacy">Chính sách</a>
+                <a href="#">Hỗ trợ</a>
+            </div>
+        </div>
+    </footer>
+
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+
+    <script>
+        // Lucide icons
+        lucide.createIcons();
+
+        // Dropdown toggle
+        function toggleDropdown() {
+            document.getElementById('userDropdown').classList.toggle('open');
+        }
+
+        // Close dropdown on outside click
+        document.addEventListener('click', function (e) {
+            var dropdown = document.getElementById('userDropdown');
+            if (dropdown && !dropdown.contains(e.target)) {
+                dropdown.classList.remove('open');
+            }
+        });
+    </script>
+
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>
