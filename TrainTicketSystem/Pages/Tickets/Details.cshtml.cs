@@ -77,7 +77,8 @@ namespace TrainTicketSystem.Pages.Tickets
 
             // ---- Query 2: seat rows for this booking ----
             var seatSql = @"
-                SELECT s.SeatNumber, st.TypeName, bd.Price
+                SELECT s.SeatNumber, st.TypeName, bd.Price,
+                       bd.PassengerName, bd.PassengerPhone
                 FROM BookingDetail bd
                 JOIN Seat s     ON bd.SeatId     = s.SeatId
                 JOIN SeatType st ON s.SeatTypeId = st.SeatTypeId
@@ -92,9 +93,11 @@ namespace TrainTicketSystem.Pages.Tickets
             {
                 Booking.Seats.Add(new SeatRowViewModel
                 {
-                    SeatNumber   = seatReader.GetString(0),
-                    SeatTypeName = seatReader.GetString(1),
-                    Price        = seatReader.GetDecimal(2)
+                    SeatNumber     = seatReader.GetString(0),
+                    SeatTypeName   = seatReader.GetString(1),
+                    Price          = seatReader.GetDecimal(2),
+                    PassengerName  = seatReader.IsDBNull(3) ? null : seatReader.GetString(3),
+                    PassengerPhone = seatReader.IsDBNull(4) ? null : seatReader.GetString(4)
                 });
             }
 

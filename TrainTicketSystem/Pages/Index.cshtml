@@ -1,83 +1,499 @@
-﻿@page
+@page
 @model TrainTicketSystem.Pages.IndexModel
 @{
-    Layout = "UserLayout";
-}
-@{
-    ViewData["Title"] = "Train Ticket Booking";
+    ViewData["Title"] = "Tìm vé tàu";
+    Layout = "~/Pages/Shared/_CustomerLayout.cshtml";
 }
 
-<div class="container mt-4">
+<div class="hp-page">
 
-    <h2 class="text-center mb-4">🚆 Train Ticket Booking System</h2>
-
-    <!-- SEARCH FORM -->
-
-    <form method="get" class="row g-3 mb-4">
-
-        <div class="col-md-3">
-            <label>Date</label>
-            <input type="date" asp-for="SearchDate" class="form-control" />
+    <!-- ═══ HERO SECTION ═══ -->
+    <section class="hp-hero">
+        <div class="hp-hero-inner">
+            <div class="hp-hero-badge">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 12h18M16 6l6 6-6 6"/></svg>
+                Tìm chuyến tàu
+            </div>
+            <h1 class="hp-hero-title">Đặt vé tàu trực tuyến</h1>
+            <p class="hp-hero-sub">Tìm kiếm và đặt vé nhanh chóng với hàng trăm chuyến tàu mỗi ngày</p>
         </div>
+    </section>
 
-        <div class="col-md-3">
-            <label>From Station</label>
-            <input type="text" asp-for="FromStation" class="form-control" />
-        </div>
+    <!-- ═══ SEARCH CARD ═══ -->
+    <section class="hp-search-section">
+        <form method="get" class="hp-search-card">
+            <div class="hp-search-grid">
+                <div class="hp-field">
+                    <label class="hp-label">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                        Ngày đi
+                    </label>
+                    <input type="date" asp-for="SearchDate" class="hp-input" />
+                </div>
+                <div class="hp-field">
+                    <label class="hp-label">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="10" r="3"/><path d="M12 21.7C17.3 17 20 13 20 10a8 8 0 1 0-16 0c0 3 2.7 7 8 11.7z"/></svg>
+                        Ga đi
+                    </label>
+                    <input type="text" asp-for="FromStation" class="hp-input" placeholder="VD: Ha Noi" />
+                </div>
+                <div class="hp-field">
+                    <label class="hp-label">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="10" r="3"/><path d="M12 21.7C17.3 17 20 13 20 10a8 8 0 1 0-16 0c0 3 2.7 7 8 11.7z"/></svg>
+                        Ga đến
+                    </label>
+                    <input type="text" asp-for="ToStation" class="hp-input" placeholder="VD: Sai Gon" />
+                </div>
+                <div class="hp-field hp-field-btn">
+                    <button type="submit" class="hp-search-btn">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                        Tìm kiếm
+                    </button>
+                </div>
+            </div>
 
-        <div class="col-md-3">
-            <label>To Station</label>
-            <input type="text" asp-for="ToStation" class="form-control" />
-        </div>
-
-        
-
-        <div class="col-md-1 d-grid">
-            <label></label>
-            <button class="btn btn-primary">Search</button>
-        </div>
-
-    </form>
-
-
-    <!-- TRAIN LIST -->
-
-    <table class="table table-bordered table-striped">
-
-        <thead class="table-dark">
-            <tr>
-                <th>Train</th>
-                <th>From</th>
-                <th>To</th>
-                <th>Departure</th>
-                
-                <th>Price</th>
-                <th></th>
-            </tr>
-        </thead>
-
-        <tbody>
-
-            @foreach (var item in Model.Trains)
+            @if (Model.SearchDate != null || !string.IsNullOrEmpty(Model.FromStation) || !string.IsNullOrEmpty(Model.ToStation))
             {
-                <tr>
-                    <td>@item.TrainName</td>
-                    <td>@item.FromStation</td>
-                    <td>@item.ToStation</td>
-                    <td>@item.DepartureTime</td>
-
-                    <td>@item.Price?.ToString("N0") VND</td>
-                    <td>
-                        <a class="btn btn-success btn-sm"
-                           href="/Trains/TrainDetail?id=@item.ScheduleId">
-                            View
-                        </a>
-                    </td>
-                </tr>
+                <div class="hp-active-filters">
+                    <span class="hp-filter-label">Bộ lọc đang áp dụng:</span>
+                    @if (Model.SearchDate != null)
+                    {
+                        <span class="hp-filter-tag">
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                            @Model.SearchDate.Value.ToString("dd/MM/yyyy")
+                        </span>
+                    }
+                    @if (!string.IsNullOrEmpty(Model.FromStation))
+                    {
+                        <span class="hp-filter-tag">Từ: @Model.FromStation</span>
+                    }
+                    @if (!string.IsNullOrEmpty(Model.ToStation))
+                    {
+                        <span class="hp-filter-tag">Đến: @Model.ToStation</span>
+                    }
+                    <a href="/" class="hp-filter-clear">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                        Xóa bộ lọc
+                    </a>
+                </div>
             }
+        </form>
+    </section>
 
-        </tbody>
+    <!-- ═══ RESULTS ═══ -->
+    <section class="hp-results">
+        <div class="hp-results-header">
+            <h2 class="hp-results-title">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2c-4 0-8 .5-8 4v9.5C4 17.43 5.57 19 7.5 19L6 20.5v.5h2l2-2h4l2 2h2v-.5L16.5 19c1.93 0 3.5-1.57 3.5-3.5V6c0-3.5-3.58-4-8-4z"/></svg>
+                Chuyến tàu hiện có
+            </h2>
+            <span class="hp-results-count">@Model.Trains.Count chuyến</span>
+        </div>
 
-    </table>
+        @if (Model.Trains.Any())
+        {
+            <div class="hp-train-list">
+                @foreach (var item in Model.Trains)
+                {
+                    <div class="hp-train-card">
+                        <div class="hp-train-left">
+                            <div class="hp-train-icon-wrap">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M12 2c-4 0-8 .5-8 4v9.5C4 17.43 5.57 19 7.5 19L6 20.5v.5h2l2-2h4l2 2h2v-.5L16.5 19c1.93 0 3.5-1.57 3.5-3.5V6c0-3.5-3.58-4-8-4zm0 2c3.86 0 5.95.37 6.5 1.5H5.5C6.05 4.37 8.14 4 12 4zM6 8.5A1.5 1.5 0 0 1 7.5 7 1.5 1.5 0 0 1 9 8.5 1.5 1.5 0 0 1 7.5 10 1.5 1.5 0 0 1 6 8.5zm10.5 1.5A1.5 1.5 0 0 1 15 8.5 1.5 1.5 0 0 1 16.5 7 1.5 1.5 0 0 1 18 8.5 1.5 1.5 0 0 1 16.5 10zM6 14h12v2H6v-2z"/>
+                                </svg>
+                            </div>
+                            <div class="hp-train-name">@item.TrainName</div>
+                        </div>
 
+                        <div class="hp-train-route">
+                            <div class="hp-station">
+                                <span class="hp-station-name">@item.FromStation</span>
+                                <span class="hp-station-label">Ga đi</span>
+                            </div>
+                            <div class="hp-route-arrow">
+                                <div class="hp-arrow-line"></div>
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                                <div class="hp-arrow-line"></div>
+                            </div>
+                            <div class="hp-station">
+                                <span class="hp-station-name">@item.ToStation</span>
+                                <span class="hp-station-label">Ga đến</span>
+                            </div>
+                        </div>
+
+                        <div class="hp-train-meta">
+                            <div class="hp-meta-item">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                                <span>@item.DepartureTime?.ToString("HH:mm")</span>
+                            </div>
+                            <div class="hp-meta-item">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                                <span>@item.DepartureTime?.ToString("dd/MM/yyyy")</span>
+                            </div>
+                        </div>
+
+                        <div class="hp-train-right">
+                            <div class="hp-price">@item.Price?.ToString("N0") <small>VND</small></div>
+                            <a href="/Booking/SeatMap?scheduleId=@item.ScheduleId" class="hp-book-btn">
+                                Đặt vé
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                            </a>
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+        else
+        {
+            <div class="hp-empty">
+                <div class="hp-empty-icon">
+                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><path d="M8 15s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg>
+                </div>
+                <h3>Không tìm thấy chuyến tàu</h3>
+                <p>Hãy thử thay đổi ngày hoặc ga đi/đến để tìm kết quả phù hợp.</p>
+                <a href="/" class="hp-empty-btn">Xem tất cả chuyến</a>
+            </div>
+        }
+    </section>
 </div>
+
+<!-- ═══ STYLES ═══ -->
+<style>
+    /* ── Page wrapper ── */
+    .hp-page {
+        max-width: 960px;
+        margin: 0 auto;
+        padding: 0 1rem 4rem;
+        font-family: 'Segoe UI', -apple-system, sans-serif;
+    }
+
+    /* ── Hero ── */
+    .hp-hero {
+        background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+        border-radius: 20px;
+        margin: 1.5rem 0;
+        padding: 2.5rem 2rem;
+        text-align: center;
+        position: relative;
+        overflow: hidden;
+    }
+    .hp-hero::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: radial-gradient(circle at 20% 50%, rgba(59,130,246,.15) 0%, transparent 50%),
+                    radial-gradient(circle at 80% 50%, rgba(14,165,233,.12) 0%, transparent 50%);
+        pointer-events: none;
+    }
+    .hp-hero-inner { position: relative; z-index: 1; }
+    .hp-hero-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: .4rem;
+        background: rgba(255,255,255,.1);
+        color: #93c5fd;
+        border: 1px solid rgba(255,255,255,.12);
+        border-radius: 100px;
+        padding: .35rem .9rem;
+        font-size: .78rem;
+        font-weight: 600;
+        letter-spacing: .02em;
+        margin-bottom: .75rem;
+        backdrop-filter: blur(10px);
+    }
+    .hp-hero-title {
+        color: #fff;
+        font-size: 1.75rem;
+        font-weight: 800;
+        margin: 0 0 .4rem;
+        letter-spacing: -.01em;
+    }
+    .hp-hero-sub { color: #94a3b8; font-size: .92rem; margin: 0; }
+
+    /* ── Search Card ── */
+    .hp-search-section { margin-bottom: 1.5rem; }
+    .hp-search-card {
+        background: #fff;
+        border-radius: 16px;
+        padding: 1.5rem;
+        box-shadow: 0 4px 24px rgba(0,0,0,.06);
+        border: 1px solid #e2e8f0;
+    }
+    .hp-search-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr auto;
+        gap: 1rem;
+        align-items: end;
+    }
+    .hp-field { display: flex; flex-direction: column; gap: .35rem; }
+    .hp-field-btn { align-self: end; }
+    .hp-label {
+        display: flex;
+        align-items: center;
+        gap: .35rem;
+        font-size: .78rem;
+        font-weight: 600;
+        color: #475569;
+        text-transform: uppercase;
+        letter-spacing: .04em;
+    }
+    .hp-input {
+        padding: .65rem .875rem;
+        border: 1.5px solid #cbd5e1;
+        border-radius: 10px;
+        font-size: .9rem;
+        outline: none;
+        transition: border-color .2s, box-shadow .2s;
+        background: #f8fafc;
+        color: #1e293b;
+    }
+    .hp-input:focus {
+        border-color: #3b82f6;
+        box-shadow: 0 0 0 3px rgba(59,130,246,.12);
+        background: #fff;
+    }
+    .hp-search-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: .5rem;
+        padding: .65rem 1.5rem;
+        background: linear-gradient(135deg, #1a1a2e, #16213e);
+        color: #fff;
+        border: none;
+        border-radius: 10px;
+        font-size: .9rem;
+        font-weight: 700;
+        cursor: pointer;
+        transition: all .2s;
+        white-space: nowrap;
+    }
+    .hp-search-btn:hover {
+        box-shadow: 0 4px 16px rgba(26,26,46,.3);
+        transform: translateY(-1px);
+    }
+
+    /* Active filters */
+    .hp-active-filters {
+        display: flex;
+        align-items: center;
+        gap: .5rem;
+        flex-wrap: wrap;
+        margin-top: 1rem;
+        padding-top: 1rem;
+        border-top: 1px solid #e2e8f0;
+    }
+    .hp-filter-label { font-size: .78rem; color: #94a3b8; font-weight: 500; }
+    .hp-filter-tag {
+        display: inline-flex;
+        align-items: center;
+        gap: .3rem;
+        background: #e0e7ff;
+        color: #4338ca;
+        border-radius: 6px;
+        padding: .2rem .6rem;
+        font-size: .75rem;
+        font-weight: 600;
+    }
+    .hp-filter-clear {
+        display: inline-flex;
+        align-items: center;
+        gap: .25rem;
+        color: #ef4444;
+        font-size: .75rem;
+        font-weight: 600;
+        text-decoration: none;
+        margin-left: auto;
+        transition: color .15s;
+    }
+    .hp-filter-clear:hover { color: #b91c1c; }
+
+    /* ── Results Header ── */
+    .hp-results-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 1rem;
+    }
+    .hp-results-title {
+        display: flex;
+        align-items: center;
+        gap: .5rem;
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: #1a1a2e;
+        margin: 0;
+    }
+    .hp-results-title svg { color: #3b82f6; }
+    .hp-results-count {
+        font-size: .8rem;
+        font-weight: 600;
+        color: #64748b;
+        background: #f1f5f9;
+        padding: .25rem .7rem;
+        border-radius: 100px;
+    }
+
+    /* ── Train Cards ── */
+    .hp-train-list { display: flex; flex-direction: column; gap: .75rem; }
+    .hp-train-card {
+        background: #fff;
+        border-radius: 14px;
+        padding: 1.25rem 1.5rem;
+        border: 1px solid #e2e8f0;
+        box-shadow: 0 2px 8px rgba(0,0,0,.04);
+        display: grid;
+        grid-template-columns: auto 1fr auto auto;
+        align-items: center;
+        gap: 1.5rem;
+        transition: all .2s;
+        cursor: default;
+    }
+    .hp-train-card:hover {
+        border-color: #93c5fd;
+        box-shadow: 0 4px 20px rgba(59,130,246,.1);
+        transform: translateY(-1px);
+    }
+
+    /* Left: icon + name */
+    .hp-train-left {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: .3rem;
+        min-width: 56px;
+    }
+    .hp-train-icon-wrap {
+        width: 44px;
+        height: 44px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 12px;
+        background: linear-gradient(135deg, #1a1a2e, #16213e);
+        color: #93c5fd;
+    }
+    .hp-train-name {
+        font-size: .82rem;
+        font-weight: 700;
+        color: #1e293b;
+        text-align: center;
+    }
+
+    /* Route */
+    .hp-train-route {
+        display: flex;
+        align-items: center;
+        gap: .75rem;
+    }
+    .hp-station { text-align: center; min-width: 70px; }
+    .hp-station-name { display: block; font-weight: 700; color: #1e293b; font-size: .95rem; }
+    .hp-station-label { display: block; font-size: .7rem; color: #94a3b8; text-transform: uppercase; letter-spacing: .04em; }
+    .hp-route-arrow {
+        display: flex;
+        align-items: center;
+        gap: .25rem;
+        color: #94a3b8;
+        flex: 1;
+        min-width: 60px;
+    }
+    .hp-arrow-line {
+        flex: 1;
+        height: 2px;
+        background: linear-gradient(90deg, #cbd5e1, #94a3b8);
+        border-radius: 2px;
+    }
+
+    /* Meta */
+    .hp-train-meta {
+        display: flex;
+        flex-direction: column;
+        gap: .35rem;
+    }
+    .hp-meta-item {
+        display: flex;
+        align-items: center;
+        gap: .35rem;
+        font-size: .8rem;
+        color: #64748b;
+        white-space: nowrap;
+    }
+    .hp-meta-item svg { color: #94a3b8; flex-shrink: 0; }
+
+    /* Right: price + button */
+    .hp-train-right {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
+        gap: .5rem;
+        min-width: 120px;
+    }
+    .hp-price {
+        font-size: 1.1rem;
+        font-weight: 800;
+        color: #0ea5e9;
+    }
+    .hp-price small {
+        font-size: .7rem;
+        font-weight: 600;
+        color: #94a3b8;
+    }
+    .hp-book-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: .35rem;
+        padding: .5rem 1.2rem;
+        background: linear-gradient(135deg, #e53935, #b71c1c);
+        color: #fff;
+        border-radius: 8px;
+        font-size: .82rem;
+        font-weight: 700;
+        text-decoration: none;
+        transition: all .2s;
+        box-shadow: 0 2px 8px rgba(229,57,53,.25);
+    }
+    .hp-book-btn:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 14px rgba(229,57,53,.35);
+        color: #fff;
+    }
+
+    /* ── Empty State ── */
+    .hp-empty {
+        text-align: center;
+        padding: 3rem 1rem;
+        background: #fff;
+        border-radius: 16px;
+        border: 1px solid #e2e8f0;
+    }
+    .hp-empty-icon { color: #cbd5e1; margin-bottom: 1rem; }
+    .hp-empty h3 { font-size: 1.15rem; font-weight: 700; color: #1e293b; margin: 0 0 .4rem; }
+    .hp-empty p { color: #64748b; font-size: .9rem; margin: 0 0 1.25rem; }
+    .hp-empty-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: .4rem;
+        padding: .6rem 1.4rem;
+        background: #f1f5f9;
+        color: #1e293b;
+        border-radius: 8px;
+        font-weight: 600;
+        text-decoration: none;
+        transition: background .15s;
+    }
+    .hp-empty-btn:hover { background: #e2e8f0; }
+
+    /* ── Responsive ── */
+    @@media (max-width: 768px) {
+        .hp-search-grid { grid-template-columns: 1fr; }
+        .hp-train-card {
+            grid-template-columns: 1fr;
+            gap: 1rem;
+            text-align: center;
+        }
+        .hp-train-left { flex-direction: row; justify-content: center; }
+        .hp-train-route { justify-content: center; }
+        .hp-train-meta { flex-direction: row; justify-content: center; gap: 1rem; }
+        .hp-train-right { align-items: center; }
+        .hp-hero-title { font-size: 1.4rem; }
+    }
+</style>

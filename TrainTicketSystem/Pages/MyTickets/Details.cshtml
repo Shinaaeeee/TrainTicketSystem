@@ -1,0 +1,622 @@
+@page "{id:int}"
+@model TrainTicketSystem.Pages.MyTickets.DetailsModel
+@{
+    ViewData["Title"] = $"Chi tiết vé #{Model.Booking?.BookingId}";
+    Layout = "~/Pages/Shared/_CustomerLayout.cshtml";
+}
+
+@if (Model.Booking == null)
+{
+    <div class="td-page">
+        <div class="td-empty">
+            <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2">
+                <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+                <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+            </svg>
+            <h3>Không tìm thấy đơn đặt vé</h3>
+            <p>Đơn đặt vé không tồn tại hoặc bạn không có quyền xem.</p>
+            <a href="/MyTickets" class="td-back-btn">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+                Quay lại danh sách
+            </a>
+        </div>
+    </div>
+}
+else
+{
+    var b = Model.Booking;
+    var statusClass = b.Status switch
+    {
+        "Paid" => "paid",
+        "Cancelled" => "cancelled",
+        _ => "pending"
+    };
+    var statusLabel = b.Status switch
+    {
+        "Paid" => "Đã thanh toán",
+        "Cancelled" => "Đã hủy",
+        _ => b.Status ?? "Chờ xử lý"
+    };
+
+    <div class="td-page">
+
+        <!-- ═══ HERO ═══ -->
+        <section class="td-hero">
+            <div class="td-hero-inner">
+                <a href="/MyTickets" class="td-back-link">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+                    Quay lại danh sách vé
+                </a>
+                <div class="td-hero-header">
+                    <div>
+                        <div class="td-hero-badge">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M15 5l-1 1"/><path d="M2 12h20"/><rect x="2" y="5" width="20" height="14" rx="2"/></svg>
+                            Đơn đặt vé #@b.BookingId
+                        </div>
+                        <h1 class="td-hero-title">Chi tiết vé</h1>
+                    </div>
+                    <span class="td-hero-status @statusClass">
+                        @if (b.Status == "Paid")
+                        {
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                        }
+                        else if (b.Status == "Cancelled")
+                        {
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                        }
+                        else
+                        {
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                        }
+                        @statusLabel
+                    </span>
+                </div>
+            </div>
+        </section>
+
+        <!-- ═══ ROUTE CARD ═══ -->
+        <div class="td-section">
+            <div class="td-section-header">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2c-4 0-8 .5-8 4v9.5C4 17.43 5.57 19 7.5 19L6 20.5v.5h2l2-2h4l2 2h2v-.5L16.5 19c1.93 0 3.5-1.57 3.5-3.5V6c0-3.5-3.58-4-8-4z"/></svg>
+                <h2>Thông tin chuyến tàu</h2>
+            </div>
+            <div class="td-route-visual">
+                <div class="td-station-block">
+                    <span class="td-station-name">@b.StartStation</span>
+                    <span class="td-station-label">Ga đi</span>
+                    <span class="td-station-time">@b.DepartureTime.ToString("HH:mm")</span>
+                </div>
+                <div class="td-route-connector">
+                    <div class="td-connector-line"></div>
+                    <div class="td-connector-train">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2c-4 0-8 .5-8 4v9.5C4 17.43 5.57 19 7.5 19L6 20.5v.5h2l2-2h4l2 2h2v-.5L16.5 19c1.93 0 3.5-1.57 3.5-3.5V6c0-3.5-3.58-4-8-4z"/></svg>
+                    </div>
+                    <div class="td-connector-line"></div>
+                </div>
+                <div class="td-station-block">
+                    <span class="td-station-name">@b.EndStation</span>
+                    <span class="td-station-label">Ga đến</span>
+                    <span class="td-station-time">@b.ArrivalTime.ToString("HH:mm")</span>
+                </div>
+            </div>
+            <div class="td-info-grid">
+                <div class="td-info-item">
+                    <span class="td-info-label">Tàu</span>
+                    <span class="td-info-value">@b.TrainName</span>
+                </div>
+                <div class="td-info-item">
+                    <span class="td-info-label">Ngày khởi hành</span>
+                    <span class="td-info-value">@b.DepartureTime.ToString("dd/MM/yyyy")</span>
+                </div>
+                <div class="td-info-item">
+                    <span class="td-info-label">Ngày đến</span>
+                    <span class="td-info-value">@b.ArrivalTime.ToString("dd/MM/yyyy")</span>
+                </div>
+                <div class="td-info-item">
+                    <span class="td-info-label">Ngày đặt vé</span>
+                    <span class="td-info-value">@b.BookingDate.ToString("HH:mm dd/MM/yyyy")</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- ═══ SEAT LIST ═══ -->
+        <div class="td-section">
+            <div class="td-section-header">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21V5a2 2 0 0 0-2-2H7a2 2 0 0 0-2 2v16"/><path d="M3 21h18"/><path d="M9 7h6"/></svg>
+                <h2>Danh sách ghế</h2>
+                <span class="td-seat-count">@b.Seats.Count ghế</span>
+            </div>
+            <div class="td-seat-list">
+                @foreach (var seat in b.Seats)
+                {
+                    <div class="td-seat-row">
+                        <div class="td-seat-left">
+                            <div class="td-seat-icon">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="2" width="16" height="20" rx="2"/><path d="M9 22v-4h6v4"/><path d="M8 6h.01"/><path d="M16 6h.01"/></svg>
+                            </div>
+                            <div>
+                                <span class="td-seat-number">@seat.SeatNumber</span>
+                                <span class="td-seat-type">@seat.SeatTypeName</span>
+                            </div>
+                        </div>
+                        <div class="td-seat-passenger">
+                            @if (!string.IsNullOrEmpty(seat.PassengerName))
+                            {
+                                <span class="td-passenger-name">
+                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                                    @seat.PassengerName
+                                </span>
+                            }
+                            @if (!string.IsNullOrEmpty(seat.PassengerPhone))
+                            {
+                                <span class="td-passenger-phone">
+                                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6A19.79 19.79 0 0 1 2.12 4.18 2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+                                    @seat.PassengerPhone
+                                </span>
+                            }
+                        </div>
+                        <span class="td-seat-price">@seat.Price.ToString("N0") <small>₫</small></span>
+                    </div>
+                }
+            </div>
+            <div class="td-total-row">
+                <span>Tổng tiền</span>
+                <span class="td-total-price">@b.TotalPrice.ToString("N0") <small>₫</small></span>
+            </div>
+        </div>
+
+        <!-- ═══ PAYMENT INFO ═══ -->
+        <div class="td-section">
+            <div class="td-section-header">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+                <h2>Thanh toán</h2>
+            </div>
+            @if (b.PaymentDate.HasValue)
+            {
+                <div class="td-info-grid">
+                    <div class="td-info-item">
+                        <span class="td-info-label">Phương thức</span>
+                        <span class="td-info-value">@b.PaymentMethod</span>
+                    </div>
+                    <div class="td-info-item">
+                        <span class="td-info-label">Ngày thanh toán</span>
+                        <span class="td-info-value">@b.PaymentDate.Value.ToString("HH:mm dd/MM/yyyy")</span>
+                    </div>
+                    <div class="td-info-item">
+                        <span class="td-info-label">Số tiền</span>
+                        <span class="td-info-value td-paid-amount">@b.TotalPrice.ToString("N0") ₫</span>
+                    </div>
+                </div>
+            }
+            else
+            {
+                <div class="td-no-payment">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                    <span>Chưa có thông tin thanh toán</span>
+                </div>
+            }
+        </div>
+
+        <!-- ═══ ACTIONS ═══ -->
+        <div class="td-actions">
+            <a href="/MyTickets" class="td-btn-back">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+                Quay lại
+            </a>
+            @if (!string.Equals(b.Status, "Cancelled", StringComparison.OrdinalIgnoreCase))
+            {
+                <form method="post" asp-page-handler="Cancel" asp-route-id="@b.BookingId" class="d-inline" onsubmit="return confirm('Bạn có chắc muốn hủy đơn đặt vé này?');">
+                    <button type="submit" class="td-btn-cancel">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                        Hủy vé
+                    </button>
+                </form>
+            }
+        </div>
+
+    </div>
+}
+
+<!-- ═══ STYLES ═══ -->
+<style>
+    .td-page {
+        max-width: 860px;
+        margin: 0 auto;
+        padding: 0 1rem 4rem;
+        font-family: 'Segoe UI', -apple-system, sans-serif;
+    }
+
+    /* ── Hero ── */
+    .td-hero {
+        background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+        border-radius: 20px;
+        margin: 1.5rem 0;
+        padding: 1.5rem 2rem 2rem;
+        position: relative;
+        overflow: hidden;
+    }
+    .td-hero::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: radial-gradient(circle at 25% 50%, rgba(14,165,233,.12) 0%, transparent 50%),
+                    radial-gradient(circle at 75% 50%, rgba(99,102,241,.1) 0%, transparent 50%);
+        pointer-events: none;
+    }
+    .td-hero-inner { position: relative; z-index: 1; }
+
+    .td-back-link {
+        display: inline-flex;
+        align-items: center;
+        gap: .35rem;
+        color: #93c5fd;
+        font-size: .82rem;
+        font-weight: 500;
+        text-decoration: none;
+        margin-bottom: 1rem;
+        transition: color .15s;
+    }
+    .td-back-link:hover { color: #bfdbfe; }
+
+    .td-hero-header {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 1rem;
+        flex-wrap: wrap;
+    }
+    .td-hero-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: .4rem;
+        background: rgba(255,255,255,.1);
+        color: #93c5fd;
+        border: 1px solid rgba(255,255,255,.12);
+        border-radius: 100px;
+        padding: .3rem .8rem;
+        font-size: .78rem;
+        font-weight: 600;
+        letter-spacing: .02em;
+        margin-bottom: .5rem;
+        backdrop-filter: blur(10px);
+    }
+    .td-hero-title {
+        color: #fff;
+        font-size: 1.5rem;
+        font-weight: 800;
+        margin: 0;
+    }
+
+    .td-hero-status {
+        display: inline-flex;
+        align-items: center;
+        gap: .35rem;
+        padding: .35rem .8rem;
+        border-radius: 100px;
+        font-size: .78rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: .04em;
+        flex-shrink: 0;
+        margin-top: .3rem;
+    }
+    .td-hero-status.paid { background: rgba(34,197,94,.2); color: #86efac; border: 1px solid rgba(34,197,94,.3); }
+    .td-hero-status.cancelled { background: rgba(239,68,68,.2); color: #fca5a5; border: 1px solid rgba(239,68,68,.3); }
+    .td-hero-status.pending { background: rgba(255,255,255,.1); color: #94a3b8; border: 1px solid rgba(255,255,255,.12); }
+
+    /* ── Sections ── */
+    .td-section {
+        background: #fff;
+        border-radius: 14px;
+        padding: 1.25rem 1.5rem;
+        border: 1px solid #e2e8f0;
+        box-shadow: 0 2px 8px rgba(0,0,0,.04);
+        margin-bottom: .75rem;
+    }
+    .td-section-header {
+        display: flex;
+        align-items: center;
+        gap: .5rem;
+        margin-bottom: 1rem;
+        padding-bottom: .75rem;
+        border-bottom: 1px solid #f1f5f9;
+    }
+    .td-section-header svg { color: #0ea5e9; flex-shrink: 0; }
+    .td-section-header h2 {
+        font-size: .95rem;
+        font-weight: 700;
+        color: #1e293b;
+        margin: 0;
+    }
+    .td-seat-count {
+        margin-left: auto;
+        font-size: .72rem;
+        font-weight: 600;
+        color: #64748b;
+        background: #f1f5f9;
+        padding: .15rem .55rem;
+        border-radius: 100px;
+    }
+
+    /* ── Route Visual ── */
+    .td-route-visual {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: .5rem;
+        padding: 1.25rem 0;
+        margin-bottom: 1rem;
+    }
+    .td-station-block { text-align: center; min-width: 80px; }
+    .td-station-name { display: block; font-weight: 800; color: #1e293b; font-size: 1.05rem; }
+    .td-station-label {
+        display: block;
+        font-size: .65rem;
+        color: #94a3b8;
+        text-transform: uppercase;
+        letter-spacing: .05em;
+        margin: .15rem 0;
+    }
+    .td-station-time {
+        display: inline-block;
+        background: linear-gradient(135deg, #1a1a2e, #16213e);
+        color: #93c5fd;
+        font-weight: 700;
+        font-size: .82rem;
+        padding: .2rem .6rem;
+        border-radius: 6px;
+    }
+
+    .td-route-connector {
+        display: flex;
+        align-items: center;
+        flex: 1;
+        max-width: 200px;
+        gap: .25rem;
+    }
+    .td-connector-line {
+        flex: 1;
+        height: 2px;
+        background: linear-gradient(90deg, #cbd5e1, #0ea5e9, #cbd5e1);
+        border-radius: 2px;
+    }
+    .td-connector-train {
+        width: 36px;
+        height: 36px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #1a1a2e, #16213e);
+        color: #93c5fd;
+        flex-shrink: 0;
+    }
+
+    /* ── Info Grid ── */
+    .td-info-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: .75rem;
+    }
+    .td-info-item {
+        display: flex;
+        flex-direction: column;
+        gap: .15rem;
+    }
+    .td-info-label {
+        font-size: .7rem;
+        color: #94a3b8;
+        text-transform: uppercase;
+        letter-spacing: .04em;
+        font-weight: 600;
+    }
+    .td-info-value {
+        font-size: .9rem;
+        font-weight: 600;
+        color: #1e293b;
+    }
+    .td-paid-amount { color: #0ea5e9; font-weight: 800; }
+
+    /* ── Seat List ── */
+    .td-seat-list {
+        display: flex;
+        flex-direction: column;
+        gap: .5rem;
+    }
+    .td-seat-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: .6rem .75rem;
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 10px;
+        transition: all .15s;
+        gap: .75rem;
+    }
+    .td-seat-row:hover {
+        background: #f1f5f9;
+        border-color: #cbd5e1;
+    }
+    .td-seat-left {
+        display: flex;
+        align-items: center;
+        gap: .6rem;
+        min-width: 120px;
+    }
+    .td-seat-passenger {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        gap: .15rem;
+        min-width: 0;
+    }
+    .td-passenger-name {
+        display: inline-flex;
+        align-items: center;
+        gap: .3rem;
+        font-size: .82rem;
+        font-weight: 600;
+        color: #1e293b;
+    }
+    .td-passenger-name svg { color: #0ea5e9; flex-shrink: 0; }
+    .td-passenger-phone {
+        display: inline-flex;
+        align-items: center;
+        gap: .3rem;
+        font-size: .72rem;
+        color: #64748b;
+    }
+    .td-passenger-phone svg { color: #94a3b8; flex-shrink: 0; }
+    .td-seat-icon {
+        width: 34px;
+        height: 34px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: linear-gradient(135deg, #1a1a2e, #16213e);
+        color: #93c5fd;
+        border-radius: 8px;
+        flex-shrink: 0;
+    }
+    .td-seat-number {
+        display: block;
+        font-weight: 700;
+        color: #1e293b;
+        font-size: .9rem;
+        font-family: 'Cascadia Code', 'Fira Code', monospace;
+    }
+    .td-seat-type {
+        display: block;
+        font-size: .72rem;
+        color: #64748b;
+    }
+    .td-seat-price {
+        font-weight: 700;
+        color: #1e293b;
+        font-size: .9rem;
+    }
+    .td-seat-price small { font-size: .72rem; color: #94a3b8; font-weight: 600; }
+
+    .td-total-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-top: .75rem;
+        padding-top: .75rem;
+        border-top: 2px solid #e2e8f0;
+    }
+    .td-total-row > span:first-child {
+        font-size: .82rem;
+        font-weight: 700;
+        color: #64748b;
+        text-transform: uppercase;
+        letter-spacing: .03em;
+    }
+    .td-total-price {
+        font-size: 1.2rem;
+        font-weight: 800;
+        color: #0ea5e9;
+    }
+    .td-total-price small { font-size: .8rem; color: #94a3b8; font-weight: 600; }
+
+    /* ── No Payment ── */
+    .td-no-payment {
+        display: flex;
+        align-items: center;
+        gap: .5rem;
+        color: #94a3b8;
+        font-size: .88rem;
+        padding: .5rem 0;
+    }
+    .td-no-payment svg { color: #fbbf24; flex-shrink: 0; }
+
+    /* ── Actions ── */
+    .td-actions {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+        margin-top: .5rem;
+    }
+    .td-btn-back {
+        display: inline-flex;
+        align-items: center;
+        gap: .4rem;
+        padding: .55rem 1.2rem;
+        border: 1.5px solid #cbd5e1;
+        border-radius: 10px;
+        color: #475569;
+        font-size: .85rem;
+        font-weight: 600;
+        text-decoration: none;
+        background: #fff;
+        transition: all .15s;
+    }
+    .td-btn-back:hover {
+        background: #f1f5f9;
+        border-color: #94a3b8;
+        color: #1e293b;
+    }
+
+    .td-btn-cancel {
+        display: inline-flex;
+        align-items: center;
+        gap: .4rem;
+        padding: .55rem 1.2rem;
+        border: 1.5px solid #fecaca;
+        border-radius: 10px;
+        color: #dc2626;
+        font-size: .85rem;
+        font-weight: 600;
+        background: #fff;
+        cursor: pointer;
+        transition: all .15s;
+    }
+    .td-btn-cancel:hover {
+        background: #fef2f2;
+        border-color: #f87171;
+    }
+
+    /* ── Empty State ── */
+    .td-empty {
+        text-align: center;
+        padding: 3.5rem 1rem;
+        background: #fff;
+        border-radius: 16px;
+        border: 1px solid #e2e8f0;
+        margin-top: 1.5rem;
+    }
+    .td-empty svg { color: #cbd5e1; margin-bottom: 1rem; }
+    .td-empty h3 { font-size: 1.1rem; font-weight: 700; color: #1e293b; margin: 0 0 .35rem; }
+    .td-empty p { color: #64748b; font-size: .88rem; margin: 0 0 1.25rem; }
+    .td-back-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: .4rem;
+        padding: .6rem 1.4rem;
+        background: linear-gradient(135deg, #1a1a2e, #16213e);
+        color: #fff;
+        border-radius: 8px;
+        font-weight: 700;
+        font-size: .88rem;
+        text-decoration: none;
+        transition: all .2s;
+    }
+    .td-back-btn:hover {
+        box-shadow: 0 4px 16px rgba(26,26,46,.3);
+        transform: translateY(-1px);
+        color: #fff;
+    }
+
+    /* ── Responsive ── */
+    @@media (max-width: 640px) {
+        .td-hero-header { flex-direction: column; }
+        .td-route-visual { flex-direction: column; gap: .75rem; }
+        .td-route-connector { max-width: none; flex-direction: column; min-height: 40px; }
+        .td-connector-line { width: 2px; height: 20px; flex: none; }
+        .td-info-grid { grid-template-columns: 1fr; }
+        .td-actions { flex-direction: column; }
+        .td-actions > * { width: 100%; text-align: center; justify-content: center; }
+    }
+</style>
