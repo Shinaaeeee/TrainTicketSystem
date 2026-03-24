@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using TrainTicketSystem.Models;
 
+
 namespace TrainTicketSystem.Pages.Trains
 {
     public class TrainDetailModel : PageModel
@@ -13,17 +14,16 @@ namespace TrainTicketSystem.Pages.Trains
             _context = context;
         }
 
-        // Thêm dấu ? để biểu thị các đối tượng này có thể null
-        public Schedule? Schedule { get; set; }
-        public Train? Train { get; set; }
-        public Models.Route? Route { get; set; }
+        public Schedule Schedule { get; set; }
+        public Train Train { get; set; }
+        public Models.Route Route { get; set; }
 
-        // Khởi tạo sẵn danh sách rỗng để tránh cảnh báo CS8618
-        public List<Seat> Seats { get; set; } = new List<Seat>();
-        public List<int> BookedSeatIds { get; set; } = new List<int>();
+        public List<Seat> Seats { get; set; }
+
+        public List<int> BookedSeatIds { get; set; }
 
         [BindProperty]
-        public List<int> SelectedSeats { get; set; } = new List<int>();
+        public List<int> SelectedSeats { get; set; }
 
         public void OnGet(int id)
         {
@@ -45,10 +45,9 @@ namespace TrainTicketSystem.Pages.Trains
                 return RedirectToPage(new { id = scheduleId });
             }
 
-            // Sửa lỗi CS0118: Chỉ định rõ đây là Models.Booking để không bị nhầm với namespace
-            var booking = new Models.Booking
+            var booking = new TrainTicketSystem.Models.Booking
             {
-                UserId = userId, // userId lúc này chắc chắn có giá trị
+                UserId = userId,
                 BookingDate = DateTime.Now,
                 Status = "Booked"
             };
@@ -58,8 +57,7 @@ namespace TrainTicketSystem.Pages.Trains
 
             foreach (var seatId in SelectedSeats)
             {
-                // Chỉ định rõ Models.BookingDetail cho an toàn
-                Models.BookingDetail detail = new Models.BookingDetail
+                BookingDetail detail = new BookingDetail
                 {
                     BookingId = booking.BookingId,
                     SeatId = seatId
@@ -82,18 +80,13 @@ namespace TrainTicketSystem.Pages.Trains
                 Train = _context.Trains.FirstOrDefault(x => x.TrainId == Schedule.TrainId);
                 Route = _context.Routes.FirstOrDefault(x => x.RouteId == Schedule.RouteId);
 
-                // Thêm kiểm tra Train != null để tránh lỗi CS8602 (Dereference of a possibly null reference)
-                if (Train != null)
-                {
-                    Seats = _context.Seats
-                            .Where(x => x.TrainId == Train.TrainId)
-                            .ToList();
-                }
+                Seats = _context.Seats
+                        .Where(x => x.TrainId == Train.TrainId)
+                        .ToList();
 
-                // Chọn ra những ghế đã được đặt
                 BookedSeatIds = _context.BookingDetails
                         .Where(x => x.SeatId != null)
-                        .Select(x => x.SeatId!.Value) // Thêm dấu ! để khẳng định SeatId không null ở bước này
+                        .Select(x => x.SeatId.Value)
                         .ToList();
             }
         }
