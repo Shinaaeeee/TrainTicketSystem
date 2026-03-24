@@ -45,8 +45,9 @@ app.UseAuthorization();
 
 app.MapRazorPages();
 
-// ---- SignalR Hub endpoint ----
+// ---- SignalR Hub endpoints ----
 app.MapHub<SeatHub>("/seatHub");
+app.MapHub<BookingNotificationHub>("/bookingNotificationHub");
 
 app.Run();
 

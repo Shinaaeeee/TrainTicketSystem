@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="utf-8" />
@@ -7,6 +7,7 @@
 
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.0/signalr.min.js"></script>
 </head>
 <body class="bg-slate-50 font-sans text-slate-900 antialiased overflow-x-hidden">
 
@@ -73,6 +74,24 @@
         </div>
     </aside>
 
+    <style>
+        @@keyframes slideInRight {
+            from { transform: translateX(40px); opacity: 0; }
+            to   { transform: translateX(0);    opacity: 1; }
+        }
+        @@keyframes fadeOut {
+            from { opacity: 1; max-height: 80px; margin-bottom: 8px; padding: 8px 12px; }
+            to   { opacity: 0; max-height: 0;    margin-bottom: 0;  padding: 0 12px; }
+        }
+        @@keyframes pulseGreen {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(34,197,94,.6); }
+            50%      { box-shadow: 0 0 0 4px rgba(34,197,94,.0); }
+        }
+        .notif-item { animation: slideInRight .4s ease-out; overflow: hidden; }
+        .notif-item.removing { animation: fadeOut .5s ease-in forwards; }
+        .live-dot { animation: pulseGreen 1.5s ease-in-out infinite; }
+    </style>
+
     <header class="fixed top-0 left-64 right-0 h-16 bg-white border-b border-slate-200 flex items-center justify-between px-8 z-10">
         <div class="flex-1 max-w-md">
             <div class="relative">
@@ -81,12 +100,22 @@
             </div>
         </div>
 
-        <div class="flex items-center gap-6 ml-8">
-            <button class="relative p-2 text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors">
-                <i data-lucide="bell" class="w-5 h-5"></i>
-                <span class="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
-            </button>
+        <!-- ====== INLINE BOOKING NOTIFICATION PANEL ====== -->
+        <div class="flex items-center gap-3 mx-4 flex-1 max-w-xl">
+            <!-- Live indicator -->
+            <div class="flex items-center gap-2 shrink-0">
+                <span id="liveDot" class="w-2.5 h-2.5 bg-green-500 rounded-full live-dot" title="Real-time connected"></span>
+                <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Live</span>
+            </div>
 
+            <!-- Notification items container -->
+            <div id="bookingNotifications" class="flex-1 flex flex-col gap-0 overflow-hidden max-h-14">
+                <div id="emptyNotif" class="text-xs text-slate-400 italic px-3 py-1">Chưa có đặt vé mới...</div>
+            </div>
+        </div>
+        <!-- =============================================== -->
+
+        <div class="flex items-center gap-6 ml-4 shrink-0">
             <div class="w-10 h-10 rounded-full bg-slate-200 overflow-hidden border border-slate-300 cursor-pointer">
                 <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Admin" alt="Admin" class="w-full h-full object-cover" />
             </div>
@@ -94,7 +123,7 @@
             <a asp-page="/Logout" class="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors">
                 <i data-lucide="log-out" class="w-4 h-4"></i>
                 <span>Logout</span>
-            </a>    
+            </a>
         </div>
     </header>
 
@@ -104,6 +133,100 @@
 
     <script>
         lucide.createIcons();
+
+        // ---- SignalR: Real-time booking notifications ----
+        (function () {
+            const MAX_VISIBLE = 3;
+            const AUTO_DISMISS_MS = 30000; // 30 seconds
+            const container = document.getElementById('bookingNotifications');
+            const emptyMsg  = document.getElementById('emptyNotif');
+            const liveDot   = document.getElementById('liveDot');
+            let notifCount = 0;
+
+            const connection = new signalR.HubConnectionBuilder()
+                .withUrl('/bookingNotificationHub')
+                .withAutomaticReconnect()
+                .build();
+
+            connection.on('ReceiveBookingNotification', function (data) {
+                // Hide empty message
+                if (emptyMsg) emptyMsg.style.display = 'none';
+
+                // Build notification element
+                const el = document.createElement('div');
+                el.className = 'notif-item flex items-center gap-2 px-3 py-1.5 bg-emerald-50 border border-emerald-200 rounded-lg text-xs';
+                el.innerHTML =
+                    '<svg class="w-3.5 h-3.5 text-emerald-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">' +
+                    '  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>' +
+                    '</svg>' +
+                    '<span class="font-semibold text-emerald-700">' + escapeHtml(data.time) + '</span>' +
+                    '<span class="text-slate-600 truncate">' +
+                        '<strong>' + escapeHtml(data.customerName) + '</strong>' +
+                        ' đặt vé ' +
+                        '<span class="text-blue-600 font-medium">' + escapeHtml(data.routeName) + '</span>' +
+                    '</span>';
+
+                // Insert at the top
+                container.insertBefore(el, container.firstChild);
+                notifCount++;
+
+                // Remove old ones if exceeding max
+                while (container.children.length > MAX_VISIBLE + 1) {
+                    // +1 for emptyMsg (hidden)
+                    const last = container.lastElementChild;
+                    if (last && last.id !== 'emptyNotif') {
+                        last.remove();
+                        notifCount--;
+                    } else break;
+                }
+
+                // Auto-dismiss after timeout
+                setTimeout(function () {
+                    el.classList.add('removing');
+                    el.addEventListener('animationend', function () {
+                        el.remove();
+                        notifCount--;
+                        if (notifCount <= 0) {
+                            notifCount = 0;
+                            if (emptyMsg) emptyMsg.style.display = '';
+                        }
+                    });
+                }, AUTO_DISMISS_MS);
+            });
+
+            // Connection state visual feedback
+            connection.onreconnecting(function () {
+                liveDot.classList.remove('bg-green-500');
+                liveDot.classList.add('bg-yellow-500');
+            });
+            connection.onreconnected(function () {
+                liveDot.classList.remove('bg-yellow-500');
+                liveDot.classList.add('bg-green-500');
+            });
+            connection.onclose(function () {
+                liveDot.classList.remove('bg-green-500', 'bg-yellow-500');
+                liveDot.classList.add('bg-red-500');
+            });
+
+            connection.start()
+                .then(function () {
+                    return connection.invoke('JoinAdminGroup');
+                })
+                .then(function () {
+                    console.log('[BookingNotification] Connected & joined admin group');
+                })
+                .catch(function (err) {
+                    console.error('[BookingNotification] Connection failed:', err);
+                    liveDot.classList.remove('bg-green-500');
+                    liveDot.classList.add('bg-red-500');
+                });
+
+            function escapeHtml(str) {
+                var div = document.createElement('div');
+                div.textContent = str || '';
+                return div.innerHTML;
+            }
+        })();
     </script>
 
     @await RenderSectionAsync("Scripts", required: false)
