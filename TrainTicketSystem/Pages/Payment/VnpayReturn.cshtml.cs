@@ -1,7 +1,10 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
+using TrainTicketSystem.Hubs;
 using TrainTicketSystem.Models;
+using BookingModel = TrainTicketSystem.Models.Booking;
 using TrainTicketSystem.Services;
 
 namespace TrainTicketSystem.Pages.Payment;
@@ -15,12 +18,18 @@ public class VnpayReturnModel : PageModel
     private readonly TrainTicketDbContext _context;
     private readonly ISeatService _seatService;
     private readonly VnpayService _vnpay;
+    private readonly IHubContext<BookingNotificationHub> _notificationHub;
 
-    public VnpayReturnModel(TrainTicketDbContext context, ISeatService seatService, VnpayService vnpay)
+    public VnpayReturnModel(
+        TrainTicketDbContext context,
+        ISeatService seatService,
+        VnpayService vnpay,
+        IHubContext<BookingNotificationHub> notificationHub)
     {
         _context = context;
         _seatService = seatService;
         _vnpay = vnpay;
+        _notificationHub = notificationHub;
     }
 
     // ------------------------------------------------------------------ //
@@ -76,6 +85,9 @@ public class VnpayReturnModel : PageModel
 
             await _context.SaveChangesAsync();
 
+            // ---- Send real-time notification to admin dashboard ----
+            await SendBookingNotificationAsync(booking);
+
             // Clear session
             HttpContext.Session.Remove("SelectedSeats");
             HttpContext.Session.Remove("PendingBookingId");
@@ -104,6 +116,46 @@ public class VnpayReturnModel : PageModel
             await _context.SaveChangesAsync();
 
             return RedirectToPage("/Payment/Fail", new { bookingId, code = responseCode });
+        }
+    }
+
+    /// <summary>
+    /// Loads booking details (customer name, route) and pushes a notification
+    /// to all admin clients via SignalR.
+    /// </summary>
+    private async Task SendBookingNotificationAsync(BookingModel booking)
+    {
+        try
+        {
+            // Reload with navigation properties for notification content
+            var fullBooking = await _context.Bookings
+                .Include(b => b.User)
+                .Include(b => b.Schedule).ThenInclude(s => s!.Route)
+                .FirstOrDefaultAsync(b => b.BookingId == booking.BookingId);
+
+            if (fullBooking == null) return;
+
+            var customerName = fullBooking.User?.FullName ?? fullBooking.User?.Username ?? "Khách";
+            var route = fullBooking.Schedule?.Route;
+            var routeName = route != null
+                ? $"{route.StartStation} → {route.EndStation}"
+                : "N/A";
+            var time = DateTime.Now.ToString("HH:mm");
+            var totalPrice = fullBooking.TotalPrice?.ToString("N0") ?? "0";
+
+            await _notificationHub.Clients.Group("admin").SendAsync("ReceiveBookingNotification", new
+            {
+                bookingId = fullBooking.BookingId,
+                customerName,
+                routeName,
+                time,
+                totalPrice,
+                seatCount = fullBooking.BookingDetails?.Count ?? 0
+            });
+        }
+        catch
+        {
+            // Notification failure should never break the payment flow
         }
     }
 }

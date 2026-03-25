@@ -1,7 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
-using TrainTicketSystem.Models; // Đảm bảo đúng namespace Models của bạn
+using TrainTicketSystem.Models;
 using ClosedXML.Excel;
 using System.IO;
 
@@ -16,7 +16,7 @@ namespace TrainTicketSystem.Pages.Admin
             _context = context;
         }
 
-        // Khai báo các biến lưu con số thống kê
+        // Statistics
         public int TotalUsers { get; set; }
         public int TotalTrains { get; set; }
         public int TotalRoutes { get; set; }
@@ -24,7 +24,6 @@ namespace TrainTicketSystem.Pages.Admin
         public int TotalSeats { get; set; }
         public int TotalTickets { get; set; }
 
-        // Class phụ để chứa dữ liệu bảng Recent Bookings
         public class RecentBookingDto
         {
             public string? CustomerName { get; set; }
@@ -32,14 +31,19 @@ namespace TrainTicketSystem.Pages.Admin
             public string? TimeAgo { get; set; }
         }
 
-        public List<RecentBookingDto> RecentBookings { get; set; } = new List<RecentBookingDto>();
+        public List<RecentBookingDto> RecentBookings { get; set; } = new();
 
         // Bookings listing for admin
-        public List<BookingViewModel> Bookings { get; set; } = new List<BookingViewModel>();
+        public List<BookingViewModel> Bookings { get; set; } = new();
 
-        public async Task OnGetAsync()
+        public async Task<IActionResult> OnGetAsync()
         {
-            // 1. Lấy tổng số lượng từ các bảng
+            var role = HttpContext.Session.GetString("Role");
+            if (string.IsNullOrEmpty(role) || !string.Equals(role, "Admin", StringComparison.OrdinalIgnoreCase))
+            {
+                return RedirectToPage("/Login");
+            }
+
             if (_context.Users != null) TotalUsers = await _context.Users.CountAsync();
             if (_context.Trains != null) TotalTrains = await _context.Trains.CountAsync();
             if (_context.Routes != null) TotalRoutes = await _context.Routes.CountAsync();
@@ -47,20 +51,17 @@ namespace TrainTicketSystem.Pages.Admin
             if (_context.Seats != null) TotalSeats = await _context.Seats.CountAsync();
             if (_context.Bookings != null) TotalTickets = await _context.Bookings.CountAsync();
 
-            // 2. Lấy danh sách 4 lượt đặt vé mới nhất (Join các bảng lại với nhau)
             if (_context.Bookings != null)
             {
                 var latestBookings = await _context.Bookings
                     .Include(b => b.User)
-                    .Include(b => b.Schedule)
-                        .ThenInclude(s => s!.Route)
+                    .Include(b => b.Schedule).ThenInclude(s => s!.Route)
                     .OrderByDescending(b => b.BookingDate)
                     .Take(4)
                     .ToListAsync();
 
                 foreach (var b in latestBookings)
                 {
-                    // Tính toán hiển thị "vài giờ trước"
                     var timeSpan = DateTime.Now - (b.BookingDate ?? DateTime.Now);
                     string timeStr = timeSpan.TotalHours < 1
                         ? $"{(int)timeSpan.TotalMinutes} mins ago"
@@ -73,9 +74,9 @@ namespace TrainTicketSystem.Pages.Admin
                         TimeAgo = timeStr
                     });
                 }
-                }
+            }
 
-            // Load recent bookings for the admin listing (all bookings)
+            // Load all bookings for admin list
             if (_context.Bookings != null)
             {
                 var all = await _context.Bookings
@@ -101,7 +102,9 @@ namespace TrainTicketSystem.Pages.Admin
                     });
                 }
             }
-            }
+
+            return Page();
+        }
 
         public async Task<IActionResult> OnGetExportAsync()
         {

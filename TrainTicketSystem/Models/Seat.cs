@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 
 namespace TrainTicketSystem.Models;
@@ -13,10 +13,11 @@ public partial class Seat
 
     public int? SeatTypeId { get; set; }
 
-    // Hold tracking fields (added for real-time seat reservation feature)
-    public string? SeatHoldStatus { get; set; }   // null/'Available', 'Held', 'Booked'
-    public DateTime? HoldExpiredAt { get; set; }  // Expiry of the hold window
-    public int? HeldByUserId { get; set; }        // Which user is currently holding this seat
+    public string? SeatHoldStatus { get; set; }
+
+    public DateTime? HoldExpiredAt { get; set; }
+
+    public int? HeldByUserId { get; set; }
 
     public virtual ICollection<BookingDetail> BookingDetails { get; set; } = new List<BookingDetail>();
 

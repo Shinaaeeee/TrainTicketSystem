@@ -1,0 +1,68 @@
+﻿@page
+@model TrainTicketSystem.Pages.UserProfile.ProfileModel
+@{
+    ViewData["Title"] = "User Profile";
+}
+
+<style>
+    body {
+        background: linear-gradient(135deg,#667eea,#764ba2);
+    }
+
+    .profile-card {
+        max-width: 500px;
+        margin: auto;
+        border-radius: 15px;
+        box-shadow: 0 15px 30px rgba(0,0,0,0.2);
+    }
+</style>
+
+<div class="container mt-5">
+
+    <div class="card profile-card">
+
+        <div class="card-header bg-dark text-white text-center">
+            <h3>👤 User Profile</h3>
+        </div>
+
+        <div class="card-body">
+
+            <form method="post">
+
+                <div class="mb-3">
+                    <label>Username</label>
+                    <input class="form-control"
+                           value="@Model.User?.Username"
+                           readonly />
+                </div>
+
+                <div class="mb-3">
+                    <label>Full Name</label>
+                    <input asp-for="User.FullName" class="form-control" />
+                </div>
+
+                <div class="mb-3">
+                    <label>Email</label>
+                    <input asp-for="User.Email" class="form-control" />
+                    <span asp-validation-for="User.Email" class="text-danger"></span>
+                </div>
+
+                <div class="mb-3">
+                    <label>Phone</label>
+                    <input asp-for="User.Phone" class="form-control" />
+                    <span asp-validation-for="User.Phone" class="text-danger"></span>
+                </div>
+
+                <button class="btn btn-primary w-100">
+                    Update Profile
+                </button>
+
+            </form>
+
+            <p class="text-success text-center mt-3">
+                @ViewData["Message"]
+            </p>
+
+        </div>
+
+    </div>

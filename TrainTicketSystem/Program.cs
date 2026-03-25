@@ -13,6 +13,7 @@ builder.Services.AddSession();
 builder.Services.AddDbContext<TrainTicketDbContext>(options =>
     options.UseSqlServer(
         builder.Configuration.GetConnectionString("MyCnn")));
+Console.WriteLine(builder.Configuration.GetConnectionString("MyCnn"));
 builder.Services.AddScoped<UserSession>();
 
 // ---- SignalR (real-time seat tracking) ----
@@ -44,8 +45,9 @@ app.UseAuthorization();
 
 app.MapRazorPages();
 
-// ---- SignalR Hub endpoint ----
+// ---- SignalR Hub endpoints ----
 app.MapHub<SeatHub>("/seatHub");
+app.MapHub<BookingNotificationHub>("/bookingNotificationHub");
 
 app.Run();
 

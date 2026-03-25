@@ -46,6 +46,8 @@ namespace TrainTicketSystem.Models
         public string SeatNumber { get; set; }
         public string SeatTypeName { get; set; }
         public decimal Price { get; set; }
+        public string? PassengerName { get; set; }
+        public string? PassengerPhone { get; set; }
     }
 
     // ============================
