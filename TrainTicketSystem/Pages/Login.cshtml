@@ -1,6 +1,8 @@
 ﻿@page
 @model TrainTicketSystem.Pages.LoginModel
-
+@{
+    ViewData["HideNavbar"] = true;
+}
 @{
     ViewData["Title"] = "Train Ticket System - Login";
 }
@@ -72,3 +74,87 @@
     </div>
 
 </div>
+<style>
+    /* Nền trắng nhẹ */
+    body {
+        background: #f8fafc; /* xám rất nhẹ */
+        min-height: 100vh;
+    }
+
+    /* Title */
+    h1 {
+        color: #1e293b;
+        font-weight: 800;
+    }
+
+    .text-muted {
+        color: #64748b !important;
+    }
+
+    /* Card đẹp hơn */
+    .card {
+        border-radius: 16px;
+        border: 1px solid #e2e8f0;
+        box-shadow: 0 10px 30px rgba(0,0,0,.05);
+        overflow: hidden;
+        background: #fff;
+    }
+
+    /* Header sáng hơn */
+    .card-header {
+        background: #ffffff !important;
+        color: #1e293b !important;
+        border-bottom: 1px solid #e2e8f0;
+        font-weight: 700;
+    }
+
+    /* Input */
+    .form-control {
+        border-radius: 10px;
+        padding: 10px 12px;
+        background: #f1f5f9;
+        border: 1px solid #cbd5e1;
+        transition: 0.2s;
+    }
+
+        .form-control:focus {
+            border-color: #3b82f6;
+            background: #fff;
+            box-shadow: 0 0 0 3px rgba(59,130,246,.1);
+        }
+
+    /* Button nhẹ hơn */
+    .btn-primary {
+        background: #3b82f6;
+        border: none;
+        border-radius: 10px;
+        font-weight: 700;
+        padding: 10px;
+        transition: 0.2s;
+    }
+
+        .btn-primary:hover {
+            background: #2563eb;
+            transform: translateY(-1px);
+            box-shadow: 0 5px 15px rgba(59,130,246,.3);
+        }
+
+    /* Link */
+    a {
+        color: #3b82f6;
+    }
+
+        a:hover {
+            text-decoration: underline;
+        }
+
+    /* Alert */
+    .alert {
+        border-radius: 10px;
+    }
+
+    /* Căn giữa */
+    .container {
+        margin-top: 80px;
+    }
+</style>
