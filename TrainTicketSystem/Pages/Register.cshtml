@@ -1,6 +1,9 @@
 ﻿@page
 @model TrainTicketSystem.Pages.RegisterModel
 @{
+    ViewData["HideNavbar"] = true;
+}
+@{
     ViewData["Title"] = "Register";
 }
 
@@ -12,7 +15,7 @@
     }
 
     .register-container {
-        height: 100vh;
+        min-height: 100vh;
         display: flex;
         justify-content: center;
         align-items: center;
@@ -98,3 +101,64 @@
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
 }
+<style>
+    html, body {
+        margin: 0;
+        padding: 0;
+        overflow-x: hidden;
+        min-height: 100vh;
+        background: linear-gradient(135deg, #1a1a2e, #16213e);
+    }
+
+    /* Center form */
+    .register-container {
+        min-height: 100vh;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+
+    /* Card */
+    .register-card {
+        width: 420px;
+        border-radius: 16px;
+        border: none;
+        box-shadow: 0 12px 40px rgba(0,0,0,.25);
+    }
+
+    /* Title */
+    .system-title {
+        text-align: center;
+        font-weight: 800;
+        margin-bottom: 20px;
+        color: #1e293b;
+    }
+
+    /* Input */
+    .form-control {
+        border-radius: 10px;
+        padding: 10px 12px;
+        background: #f8fafc;
+        border: 1px solid #cbd5e1;
+    }
+
+        .form-control:focus {
+            border-color: #3b82f6;
+            background: #fff;
+            box-shadow: 0 0 0 3px rgba(59,130,246,.15);
+        }
+
+    /* Button */
+    .btn-success {
+        background: linear-gradient(135deg, #1a1a2e, #16213e);
+        border: none;
+        border-radius: 10px;
+        font-weight: 700;
+    }
+
+    /* Fix Bootstrap gây tràn */
+    .row {
+        margin-left: 0 !important;
+        margin-right: 0 !important;
+    }
+</style>

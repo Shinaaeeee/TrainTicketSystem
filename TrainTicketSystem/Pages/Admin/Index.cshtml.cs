@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc.RazorPages;
+﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
 using TrainTicketSystem.Models; // Đảm bảo đúng namespace Models của bạn
 
@@ -31,9 +32,17 @@ namespace TrainTicketSystem.Pages.Admin
 
         public List<RecentBookingDto> RecentBookings { get; set; } = new List<RecentBookingDto>();
 
-        public async Task OnGetAsync()
+        public async Task<IActionResult> OnGetAsync()
         {
-            // 1. Lấy tổng số lượng từ các bảng
+            
+            var role = HttpContext.Session.GetString("Role");
+
+            if (role == null || role != "Admin")
+            {
+                return RedirectToPage("/Login");
+            }
+
+          
             if (_context.Users != null) TotalUsers = await _context.Users.CountAsync();
             if (_context.Trains != null) TotalTrains = await _context.Trains.CountAsync();
             if (_context.Routes != null) TotalRoutes = await _context.Routes.CountAsync();
@@ -41,7 +50,6 @@ namespace TrainTicketSystem.Pages.Admin
             if (_context.Seats != null) TotalSeats = await _context.Seats.CountAsync();
             if (_context.Bookings != null) TotalTickets = await _context.Bookings.CountAsync();
 
-            // 2. Lấy danh sách 4 lượt đặt vé mới nhất (Join các bảng lại với nhau)
             if (_context.Bookings != null)
             {
                 var latestBookings = await _context.Bookings
@@ -54,7 +62,6 @@ namespace TrainTicketSystem.Pages.Admin
 
                 foreach (var b in latestBookings)
                 {
-                    // Tính toán hiển thị "vài giờ trước"
                     var timeSpan = DateTime.Now - (b.BookingDate ?? DateTime.Now);
                     string timeStr = timeSpan.TotalHours < 1
                         ? $"{(int)timeSpan.TotalMinutes} mins ago"
@@ -63,11 +70,15 @@ namespace TrainTicketSystem.Pages.Admin
                     RecentBookings.Add(new RecentBookingDto
                     {
                         CustomerName = b.User?.FullName ?? "Unknown User",
-                        RouteInfo = b.Schedule?.Route != null ? $"{b.Schedule.Route.StartStation} - {b.Schedule.Route.EndStation}" : "Unknown Route",
+                        RouteInfo = b.Schedule?.Route != null
+                            ? $"{b.Schedule.Route.StartStation} - {b.Schedule.Route.EndStation}"
+                            : "Unknown Route",
                         TimeAgo = timeStr
                     });
                 }
             }
+
+            return Page();
         }
     }
-}
+    }
