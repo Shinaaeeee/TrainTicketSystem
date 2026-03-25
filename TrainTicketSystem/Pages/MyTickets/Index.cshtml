@@ -3,19 +3,50 @@
 @{
     ViewData["Title"] = "My Tickets";
     Layout = "~/Pages/Shared/UserLayout.cshtml";
+    var role = HttpContext.Session.GetString("Role") ?? string.Empty;
 }
 
-<div class="d-flex align-items-center justify-content-between mb-4">
-    <h2 class="h4 mb-0">My Bookings</h2>
-    <div>
-        <a href="?handler=Export" class="btn btn-sm btn-success">Export to Excel</a>
+<div class="mb-4">
+    <div class="d-flex align-items-center justify-content-between">
+        <div>
+            <h2 class="h4 mb-1">My Bookings</h2>
+            @{
+                if (string.Equals(role, "Admin", StringComparison.OrdinalIgnoreCase))
+                {
+                    <span class="badge bg-primary">Admin view — showing all bookings</span>
+                }
+                else
+                {
+                    <span class="text-muted small">Showing your bookings only</span>
+                }
+            }
+        </div>
+
+        <div class="text-end">
+            @{
+                if (string.Equals(role, "Admin", StringComparison.OrdinalIgnoreCase))
+                {
+                    <a href="?handler=Export" class="btn btn-success btn-sm d-inline-flex align-items-center">
+                        <i class="bi bi-file-earmark-excel-fill me-2"></i>
+                        <span>Export All</span>
+                    </a>
+                }
+                else
+                {
+                    <a href="?handler=Export" class="btn btn-success btn-sm d-inline-flex align-items-center">
+                        <i class="bi bi-file-earmark-excel-fill me-2"></i>
+                        <span>Export</span>
+                    </a>
+                }
+            }
+        </div>
     </div>
 </div>
 
 <div class="card shadow-sm">
     <div class="card-body p-3">
         <div class="table-responsive">
-            <table class="table table-borderless mb-0">
+            <table class="table table-hover table-striped align-middle mb-0">
                 <thead>
                     <tr class="small text-muted">
                         <th>#ID</th>
@@ -48,19 +79,21 @@
                                 <td class="align-middle small">@b.BookingDate.ToString("HH:mm:ss dd/MM/yyyy")</td>
                                 <td class="align-middle text-end fw-semibold">@b.TotalPrice.ToString("N0") ₫</td>
                                 <td class="align-middle">
-                                    <span class="badge bg-@badge text-capitalize">@b.Status</span>
+                                    <span class="badge rounded-pill bg-@badge text-capitalize">@b.Status</span>
                                 </td>
                                 <td class="align-middle text-center">
-                                    <div class="btn-group" role="group">
-                                        <a asp-page="/Tickets/Details" asp-route-id="@b.BookingId" class="btn btn-sm btn-outline-primary" title="View">
-                                            View
+                                    <div class="d-flex justify-content-center gap-2">
+                                        <a asp-page="/Tickets/Details" asp-route-id="@b.BookingId" class="btn btn-sm btn-primary d-inline-flex align-items-center" title="View">
+                                            <i class="bi bi-eye-fill me-1"></i> View
                                         </a>
 
                                         @if (!string.Equals(b.Status, "Cancelled", StringComparison.OrdinalIgnoreCase))
                                         {
                                             <form method="post" asp-page-handler="Cancel" class="d-inline" onsubmit="return confirm('Are you sure you want to cancel this booking?');">
                                                 <input type="hidden" name="bookingId" value="@b.BookingId" />
-                                                <button type="submit" class="btn btn-sm btn-outline-danger ms-1">Cancel</button>
+                                                <button type="submit" class="btn btn-sm btn-danger d-inline-flex align-items-center ms-1">
+                                                    <i class="bi bi-x-circle-fill me-1"></i> Cancel
+                                                </button>
                                             </form>
                                         }
                                     </div>
@@ -72,7 +105,10 @@
                     {
                         <tr>
                             <td colspan="8" class="text-center text-muted py-4">
-                                You have no bookings yet.
+                                <div>
+                                    <p class="mb-2">You have no bookings yet.</p>
+                                    <a class="btn btn-sm btn-primary" href="/">Search schedules and book a ticket</a>
+                                </div>
                             </td>
                         </tr>
                     }
