@@ -10,6 +10,87 @@
     <p class="text-slate-600 mt-2">Welcome to VNR Train Ticket Booking System Admin Dashboard</p>
 </div>
 
+<div class="mt-8 bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+    <div class="flex items-center justify-between mb-4">
+        <h2 class="text-lg font-bold text-slate-900">All Bookings</h2>
+
+        <div class="flex items-center gap-2">
+            <a asp-page="/Admin/Index" asp-route-handler="Export" class="inline-flex items-center gap-2 px-3 py-2 bg-green-600 hover:bg-green-700 text-white rounded-md text-sm">
+                <i data-lucide="download" class="w-4 h-4"></i>
+                <span>Export</span>
+            </a>
+        </div>
+    </div>
+
+    <div class="overflow-x-auto">
+        <table class="min-w-full divide-y divide-slate-100">
+            <thead class="bg-slate-50">
+                <tr class="text-sm text-slate-500">
+                    <th class="px-3 py-2 text-left">#ID</th>
+                    <th class="px-3 py-2 text-left">Customer</th>
+                    <th class="px-3 py-2 text-left">Trip</th>
+                    <th class="px-3 py-2 text-left">Train</th>
+                    <th class="px-3 py-2 text-left">Departure</th>
+                    <th class="px-3 py-2 text-right">Total</th>
+                    <th class="px-3 py-2 text-left">Status</th>
+                    <th class="px-3 py-2 text-center">Actions</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100 bg-white">
+                @if (Model.Bookings != null && Model.Bookings.Any())
+                {
+                    foreach (var b in Model.Bookings)
+                    {
+                        var statusClass = b.Status switch
+                        {
+                            "Paid" => "bg-emerald-100 text-emerald-800",
+                            "Cancelled" => "bg-rose-100 text-rose-800",
+                            _ => "bg-slate-100 text-slate-800"
+                        };
+
+                        <tr class="text-sm">
+                            <td class="px-3 py-3">#@b.BookingId</td>
+                            <td class="px-3 py-3">@b.FullName</td>
+                            <td class="px-3 py-3">@b.StartStation → @b.EndStation</td>
+                            <td class="px-3 py-3">@b.TrainName</td>
+                            <td class="px-3 py-3">@b.DepartureTime.ToString("HH:mm dd/MM/yyyy")</td>
+                            <td class="px-3 py-3 text-right font-semibold">@b.TotalPrice.ToString("N0") ₫</td>
+                            <td class="px-3 py-3">
+                                <span class="inline-flex items-center gap-2 px-2 py-1 rounded text-xs font-medium @statusClass">@b.Status</span>
+                            </td>
+                            <td class="px-3 py-3 text-center">
+                                <div class="inline-flex items-center gap-2">
+                                    <a asp-page="/Tickets/Details" asp-route-id="@b.BookingId" class="inline-flex items-center gap-2 px-2 py-1 border border-slate-200 rounded text-sm text-slate-700 hover:bg-slate-50">
+                                        <i data-lucide="eye" class="w-4 h-4"></i>
+                                        <span>View</span>
+                                    </a>
+
+                                    @if (!string.Equals(b.Status, "Cancelled", StringComparison.OrdinalIgnoreCase))
+                                    {
+                                        <form method="post" asp-page-handler="Cancel" class="inline">
+                                            <input type="hidden" name="bookingId" value="@b.BookingId" />
+                                            <button type="submit" class="inline-flex items-center gap-2 px-2 py-1 bg-rose-600 hover:bg-rose-700 text-white rounded text-sm" onclick="return confirm('Are you sure you want to cancel this booking?');">
+                                                <i data-lucide="x-circle" class="w-4 h-4"></i>
+                                                <span>Cancel</span>
+                                            </button>
+                                        </form>
+                                    }
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                }
+                else
+                {
+                    <tr>
+                        <td colspan="8" class="px-3 py-6 text-center text-slate-500">No bookings found.</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
     <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 hover:shadow-md transition-shadow">
         <div class="flex items-start justify-between">
