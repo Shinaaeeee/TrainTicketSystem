@@ -7,7 +7,6 @@
 
 <div class="checkout-wrapper">
 
-    <!-- ======== HEADER ======== -->
     <div class="checkout-header">
         <div class="checkout-header-icon">🎫</div>
         <h1>Xác nhận & Thanh toán</h1>
@@ -16,7 +15,6 @@
 
     <div class="checkout-body">
 
-        <!-- ======== TRIP INFO CARD ======== -->
         @if (Model.Schedule != null)
         {
             <div class="info-card">
@@ -42,7 +40,6 @@
             </div>
         }
 
-        <!-- ======== PASSENGER FORM ======== -->
         <form method="post" asp-page-handler="Pay">
             <input type="hidden" asp-for="ScheduleId" />
 
@@ -90,7 +87,6 @@
                 }
             </div>
 
-            <!-- ======== ORDER SUMMARY ======== -->
             <div class="order-summary">
                 <div class="summary-row">
                     <span>Số ghế</span>
@@ -110,7 +106,6 @@
                 </div>
             </div>
 
-            <!-- ======== ACTION BUTTONS ======== -->
             <div class="checkout-actions">
                 <a href="/Booking/SeatMap?scheduleId=@Model.ScheduleId" class="btn-back">
                     ← Quay lại chọn ghế
@@ -135,7 +130,6 @@
         font-family: 'Segoe UI', sans-serif;
     }
 
-    /* --- Header --- */
     .checkout-header {
         text-align: center;
         margin-bottom: 2rem;
@@ -149,7 +143,6 @@
     }
     .checkout-header p { color: #64748b; margin: 0; }
 
-    /* --- Cards --- */
     .info-card {
         background: #fff;
         border-radius: 16px;
@@ -166,7 +159,6 @@
     }
     .info-card-subtitle { color: #64748b; font-size: .875rem; margin: -.5rem 0 1rem; }
 
-    /* --- Trip grid --- */
     .trip-info-grid {
         display: grid;
         grid-template-columns: 1fr 1fr;
@@ -183,7 +175,6 @@
     .trip-label { font-size: .75rem; color: #94a3b8; text-transform: uppercase; letter-spacing: .04em; }
     .trip-value { font-weight: 600; color: #1e293b; }
 
-    /* --- Passenger card --- */
     .passenger-card {
         border: 1px solid #e2e8f0;
         border-radius: 12px;
@@ -232,7 +223,6 @@
     .form-input:focus { border-color: #6366f1; box-shadow: 0 0 0 3px #eef2ff; }
     .field-error { color: #ef4444; font-size: .75rem; }
 
-    /* --- Order summary --- */
     .order-summary {
         background: #1e293b;
         border-radius: 16px;
@@ -255,7 +245,6 @@
         color: #38bdf8;
     }
 
-    /* --- Actions --- */
     .checkout-actions {
         display: flex;
         gap: 1rem;

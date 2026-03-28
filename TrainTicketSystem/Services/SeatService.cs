@@ -17,9 +17,6 @@ public class SeatService : ISeatService
         _hubContext = hubContext;
     }
 
-    // ------------------------------------------------------------------ //
-    //  TryHoldSeat — atomic UPDATE, only succeeds if seat is Available    //
-    // ------------------------------------------------------------------ //
     public async Task<bool> TryHoldSeatAsync(int seatId, int userId, int scheduleId)
     {
         var rows = await _context.Database.ExecuteSqlRawAsync(
@@ -34,7 +31,7 @@ public class SeatService : ISeatService
 
         if (rows > 0)
         {
-            // Broadcast to all clients watching this schedule
+            
             await _hubContext.Clients
                 .Group($"schedule-{scheduleId}")
                 .SendAsync("SeatStatusChanged", new { seatId, status = "Held", heldByUserId = userId });
@@ -43,9 +40,6 @@ public class SeatService : ISeatService
         return rows > 0;
     }
 
-    // ------------------------------------------------------------------ //
-    //  ReleaseSeat — release a single seat if held by the given user      //
-    // ------------------------------------------------------------------ //
     public async Task ReleaseSeatAsync(int seatId, int userId, int scheduleId)
     {
         var rows = await _context.Database.ExecuteSqlRawAsync(
@@ -65,12 +59,8 @@ public class SeatService : ISeatService
         }
     }
 
-    // ------------------------------------------------------------------ //
-    //  ReleaseByUser — release all seats held by user on disconnect       //
-    // ------------------------------------------------------------------ //
     public async Task ReleaseByUserAsync(int userId, int scheduleId)
     {
-        // Find all seats held by this user on this schedule's train
         var heldSeats = await _context.Seats
             .Where(s => s.HeldByUserId == userId && s.SeatHoldStatus == "Held"
                      && s.Train!.Schedules.Any(sc => sc.ScheduleId == scheduleId))
@@ -85,7 +75,6 @@ public class SeatService : ISeatService
               WHERE HeldByUserId = @userId AND SeatHoldStatus = 'Held'",
             new SqlParameter("@userId", userId));
 
-        // Broadcast release for each seat
         foreach (var seatId in heldSeats)
         {
             await _hubContext.Clients
@@ -94,9 +83,6 @@ public class SeatService : ISeatService
         }
     }
 
-    // ------------------------------------------------------------------ //
-    //  ConfirmBooking — mark seats as Booked after successful payment     //
-    // ------------------------------------------------------------------ //
     public async Task ConfirmBookingAsync(IEnumerable<int> seatIds, int scheduleId)
     {
         var ids = string.Join(",", seatIds);
@@ -114,12 +100,8 @@ public class SeatService : ISeatService
         }
     }
 
-    // ------------------------------------------------------------------ //
-    //  ReleaseExpiredHolds — background job cleanup                       //
-    // ------------------------------------------------------------------ //
     public async Task ReleaseExpiredHoldsAsync()
     {
-        // Find expired seats first so we can broadcast per group
         var expired = await _context.Seats
             .Where(s => s.SeatHoldStatus == "Held" && s.HoldExpiredAt < DateTime.UtcNow)
             .Include(s => s.Train)
@@ -144,9 +126,7 @@ public class SeatService : ISeatService
         }
     }
 
-    // ------------------------------------------------------------------ //
-    //  GetSeatsForSchedule — load seats with status mapped for current user //
-    // ------------------------------------------------------------------ //
+
     public async Task<List<SeatDto>> GetSeatsForScheduleAsync(int scheduleId, int currentUserId)
     {
         var schedule = await _context.Schedules

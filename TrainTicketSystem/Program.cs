@@ -66,6 +66,9 @@ using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<TrainTicketDbContext>();
     db.Database.EnsureCreated();
+
+    // Call seed data here
+    TrainTicketSystem.Models.DbInitializer.Initialize(db);
 }
 
 // Configure the HTTP request pipeline.
