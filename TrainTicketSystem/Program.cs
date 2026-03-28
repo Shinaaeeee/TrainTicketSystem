@@ -99,6 +99,7 @@ app.MapHub<SeatHub>("/seatHub");
 app.MapHub<BookingNotificationHub>("/bookingNotificationHub");
 app.MapHub<ScheduleHub>("/scheduleHub");
 app.MapHub<SeatCrudHub>("/seatCrudHub");
+app.MapHub<TicketHub>("/ticketHub");
 
 app.Run();
 
