@@ -1,18 +1,21 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.Data.SqlClient;
+using TrainTicketSystem.Hubs;
 using TrainTicketSystem.Models;
 
-// ✅ Đổi namespace khớp với vị trí file Pages/Tickets/
 namespace TrainTicketSystem.Pages.Tickets
 {
     public class IndexModel : PageModel
     {
         private readonly IConfiguration _config;
+        private readonly IHubContext<TicketHub> _hubContext;
 
-        public IndexModel(IConfiguration config)
+        public IndexModel(IConfiguration config, IHubContext<TicketHub> hubContext)
         {
             _config = config;
+            _hubContext = hubContext;
         }
 
         public List<BookingViewModel> Bookings { get; set; } = new();
@@ -90,6 +93,8 @@ namespace TrainTicketSystem.Pages.Tickets
 
             await conn.OpenAsync();
             await cmd.ExecuteNonQueryAsync();
+
+            await _hubContext.Clients.Group("tickets").SendAsync("TicketChanged", newStatus, bookingId);
 
             return RedirectToPage();
         }

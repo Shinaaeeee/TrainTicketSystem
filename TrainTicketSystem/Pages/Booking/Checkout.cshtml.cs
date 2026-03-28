@@ -1,6 +1,8 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
+using TrainTicketSystem.Hubs;
 using TrainTicketSystem.Models;
 using TrainTicketSystem.Services;
 using PaymentModel = TrainTicketSystem.Models.Payment;
@@ -11,12 +13,14 @@ public class CheckoutModel : PageModel
 {
     private readonly TrainTicketDbContext _context;
     private readonly VnpayService _vnpay;
+    private readonly IHubContext<TicketHub> _ticketHub;
     private readonly decimal _defaultBasePrice;
 
-    public CheckoutModel(TrainTicketDbContext context, VnpayService vnpay, IConfiguration config)
+    public CheckoutModel(TrainTicketDbContext context, VnpayService vnpay, IConfiguration config, IHubContext<TicketHub> ticketHub)
     {
         _context = context;
         _vnpay = vnpay;
+        _ticketHub = ticketHub;
         _defaultBasePrice = config.GetValue<decimal>("Booking:DefaultBasePrice", 100_000m);
     }
 
@@ -124,6 +128,8 @@ public class CheckoutModel : PageModel
         };
         _context.Payments.Add(payment);
         await _context.SaveChangesAsync();
+
+        await _ticketHub.Clients.Group("tickets").SendAsync("TicketChanged", "create", booking.BookingId);
 
         HttpContext.Session.SetInt32("PendingBookingId", booking.BookingId);
         HttpContext.Session.SetInt32("PendingPaymentId", payment.PaymentId);

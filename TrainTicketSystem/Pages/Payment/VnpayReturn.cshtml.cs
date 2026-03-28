@@ -15,17 +15,20 @@ public class VnpayReturnModel : PageModel
     private readonly ISeatService _seatService;
     private readonly VnpayService _vnpay;
     private readonly IHubContext<BookingNotificationHub> _notificationHub;
+    private readonly IHubContext<TicketHub> _ticketHub;
 
     public VnpayReturnModel(
         TrainTicketDbContext context,
         ISeatService seatService,
         VnpayService vnpay,
-        IHubContext<BookingNotificationHub> notificationHub)
+        IHubContext<BookingNotificationHub> notificationHub,
+        IHubContext<TicketHub> ticketHub)
     {
         _context = context;
         _seatService = seatService;
         _vnpay = vnpay;
         _notificationHub = notificationHub;
+        _ticketHub = ticketHub;
     }
 
     public async Task<IActionResult> OnGetAsync()
@@ -71,6 +74,7 @@ public class VnpayReturnModel : PageModel
 
             await _context.SaveChangesAsync();
 
+            await _ticketHub.Clients.Group("tickets").SendAsync("TicketChanged", "paid", booking.BookingId);
             await SendBookingNotificationAsync(booking);
 
             HttpContext.Session.Remove("SelectedSeats");
@@ -96,6 +100,8 @@ public class VnpayReturnModel : PageModel
                 await _seatService.ReleaseSeatAsync(seatId, userId, booking.ScheduleId!.Value);
 
             await _context.SaveChangesAsync();
+
+            await _ticketHub.Clients.Group("tickets").SendAsync("TicketChanged", "cancelled", booking.BookingId);
 
             return RedirectToPage("/Payment/Fail", new { bookingId, code = responseCode });
         }
