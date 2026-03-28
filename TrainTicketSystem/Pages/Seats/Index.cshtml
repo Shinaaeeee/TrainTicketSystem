@@ -112,14 +112,46 @@
         </tbody>
     </table>
 
-    <div class="px-6 py-4 border-t border-slate-200 bg-white">
+    <div class="px-6 py-4 border-t border-slate-200 bg-white flex flex-wrap items-center justify-between gap-4">
         <p class="text-sm text-slate-600">
-            Showing <span class="font-semibold">@Model.Seats.Count</span> seat(s)
+            Hiển thị <span class="font-semibold">@Model.Seats.Count</span> trên tổng số <span class="font-semibold">@Model.TotalItems</span> ghế
             @if (Model.FilterTrainId.HasValue || Model.FilterSeatTypeId.HasValue)
             {
                 <span class="text-slate-400">— filtered results</span>
             }
         </p>
+
+        @if (Model.TotalPages > 1)
+        {
+            <div class="flex gap-1">
+                @* Nút Previous *@
+                @if (Model.PageIndex > 1)
+                {
+                    <a href="?PageIndex=@(Model.PageIndex - 1)&FilterTrainId=@Model.FilterTrainId&FilterSeatTypeId=@Model.FilterSeatTypeId"
+                       class="px-3 py-1 border border-slate-300 rounded text-slate-600 hover:bg-slate-50 text-sm transition-colors">
+                        Trước
+                    </a>
+                }
+
+                @* Vòng lặp in số trang *@
+                @for (int i = 1; i <= Model.TotalPages; i++)
+                {
+                    <a href="?PageIndex=@i&FilterTrainId=@Model.FilterTrainId&FilterSeatTypeId=@Model.FilterSeatTypeId"
+                       class="px-3 py-1 border rounded text-sm transition-colors @(i == Model.PageIndex ? "bg-slate-800 text-white border-slate-800" : "border-slate-300 text-slate-600 hover:bg-slate-50")">
+                        @i
+                    </a>
+                }
+
+                @* Nút Next *@
+                @if (Model.PageIndex < Model.TotalPages)
+                {
+                    <a href="?PageIndex=@(Model.PageIndex + 1)&FilterTrainId=@Model.FilterTrainId&FilterSeatTypeId=@Model.FilterSeatTypeId"
+                       class="px-3 py-1 border border-slate-300 rounded text-slate-600 hover:bg-slate-50 text-sm transition-colors">
+                        Sau
+                    </a>
+                }
+            </div>
+        }
     </div>
 </div>
 
