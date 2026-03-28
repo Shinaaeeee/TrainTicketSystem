@@ -1,0 +1,237 @@
+@page
+@model TrainTicketSystem.Pages.Admin.UsersModel
+@{
+    ViewData["Title"] = "User Management";
+    Layout = "~/Pages/Shared/_AdminLayout.cshtml";
+}
+
+<div class="flex items-center justify-between mb-8">
+    <div>
+        <h1 class="text-3xl font-bold text-slate-900">User Management</h1>
+        <p class="text-slate-600 mt-1">Manage all registered users</p>
+    </div>
+</div>
+
+@* ── Success / Error alerts ── *@
+@if (TempData["SuccessMessage"] != null)
+{
+    <div id="successAlert" class="mb-6 flex items-center gap-3 px-4 py-3 bg-emerald-50 border border-emerald-200 rounded-lg text-sm text-emerald-800">
+        <i data-lucide="check-circle" class="w-5 h-5 text-emerald-600 shrink-0"></i>
+        <span>@TempData["SuccessMessage"]</span>
+    </div>
+}
+@if (TempData["ErrorMessage"] != null)
+{
+    <div id="errorAlert" class="mb-6 flex items-center gap-3 px-4 py-3 bg-rose-50 border border-rose-200 rounded-lg text-sm text-rose-800">
+        <i data-lucide="alert-circle" class="w-5 h-5 text-rose-600 shrink-0"></i>
+        <span>@TempData["ErrorMessage"]</span>
+    </div>
+}
+
+@* ── Filter bar ── *@
+<form method="get" class="flex flex-wrap gap-4 mb-6">
+    <div class="flex-1 min-w-[300px]">
+        <div class="relative">
+            <i data-lucide="search" class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-[18px] h-[18px]"></i>
+            <input type="text" name="SearchName" value="@Model.SearchName"
+                   placeholder="Search by name, username or email..."
+                   class="w-full pl-10 pr-4 py-2 border border-slate-300 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all shadow-sm" />
+        </div>
+    </div>
+
+    <select name="RoleFilter"
+            class="w-44 border border-slate-300 rounded-lg py-2 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-slate-700 shadow-sm">
+        <option value="">All Roles</option>
+        <option value="Admin" selected="@(Model.RoleFilter == "Admin")">Admin</option>
+        <option value="User" selected="@(Model.RoleFilter == "User")">User</option>
+    </select>
+
+    <button type="submit"
+            class="bg-slate-800 hover:bg-slate-900 text-white px-5 py-2 rounded-lg text-sm font-medium transition-colors shadow-sm">
+        Search
+    </button>
+
+    @if (!string.IsNullOrEmpty(Model.SearchName) || !string.IsNullOrEmpty(Model.RoleFilter))
+    {
+        <a href="/Admin/Users"
+           class="bg-red-50 hover:bg-red-100 border border-red-200 text-red-600 px-5 py-2 rounded-lg text-sm font-medium transition-colors flex items-center shadow-sm">
+            Clear
+        </a>
+    }
+</form>
+
+@* ── Table ── *@
+<div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+    <table class="w-full text-left border-collapse">
+        <thead>
+            <tr class="bg-slate-50 border-b border-slate-200">
+                <th class="py-4 px-6 font-semibold text-slate-700 text-sm">#ID</th>
+                <th class="py-4 px-6 font-semibold text-slate-700 text-sm">Username</th>
+                <th class="py-4 px-6 font-semibold text-slate-700 text-sm">Full Name</th>
+                <th class="py-4 px-6 font-semibold text-slate-700 text-sm">Email</th>
+                <th class="py-4 px-6 font-semibold text-slate-700 text-sm">Phone</th>
+                <th class="py-4 px-6 font-semibold text-slate-700 text-sm">Role</th>
+                <th class="py-4 px-6 font-semibold text-slate-700 text-sm text-center">Actions</th>
+            </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-200">
+            @if (Model.Users.Any())
+            {
+                @foreach (var u in Model.Users)
+                {
+                    var roleBadge = string.Equals(u.Role, "Admin", StringComparison.OrdinalIgnoreCase)
+                        ? "bg-blue-100 border-blue-200 text-blue-700"
+                        : "bg-slate-100 border-slate-200 text-slate-700";
+
+                    <tr class="hover:bg-slate-50 transition-colors">
+                        <td class="py-4 px-6 font-mono text-slate-500 text-sm">#@u.UserId</td>
+                        <td class="py-4 px-6 font-medium text-slate-900">@u.Username</td>
+                        <td class="py-4 px-6 text-slate-700">@(u.FullName ?? "—")</td>
+                        <td class="py-4 px-6 text-slate-700 text-sm">@(u.Email ?? "—")</td>
+                        <td class="py-4 px-6 text-slate-700 text-sm">@(u.Phone ?? "—")</td>
+                        <td class="py-4 px-6">
+                            <span class="px-3 py-1 rounded-full text-xs font-semibold border @roleBadge">
+                                @(u.Role ?? "User")
+                            </span>
+                        </td>
+                        <td class="py-4 px-6 text-center">
+                            <div class="inline-flex items-center justify-center gap-2">
+                                <!-- Edit -->
+                                <button type="button"
+                                        onclick="openEditModal(@u.UserId, '@u.Username.Replace("'", "\\'")','@((u.FullName ?? "").Replace("'", "\\'"))','@((u.Email ?? "").Replace("'", "\\'"))','@((u.Phone ?? "").Replace("'", "\\'"))','@((u.Role ?? "User").Replace("'", "\\'"))')"
+                                        class="text-blue-500 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 p-2 rounded-lg transition-colors"
+                                        title="Edit User">
+                                    <i data-lucide="pencil" class="w-[18px] h-[18px]"></i>
+                                </button>
+                                <!-- Delete -->
+                                <form method="post" asp-page-handler="Delete" class="inline">
+                                    <input type="hidden" name="userId" value="@u.UserId" />
+                                    <button type="submit"
+                                            onclick="return confirm('Are you sure you want to delete user \'@u.Username.Replace("'", "\\'")\'?');"
+                                            class="text-red-500 hover:text-red-700 bg-red-50 hover:bg-red-100 p-2 rounded-lg transition-colors"
+                                            title="Delete User">
+                                        <i data-lucide="trash-2" class="w-[18px] h-[18px]"></i>
+                                    </button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                }
+            }
+            else
+            {
+                <tr>
+                    <td colspan="7" class="py-10 text-center text-slate-500">
+                        <div class="flex flex-col items-center justify-center">
+                            <i data-lucide="users" class="w-10 h-10 text-slate-300 mb-2"></i>
+                            <p>No users found matching your criteria.</p>
+                        </div>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+
+    <div class="px-6 py-4 border-t border-slate-200 bg-white">
+        <p class="text-sm text-slate-600">
+            Showing <span class="font-semibold">@Model.Users.Count</span> user(s)
+        </p>
+    </div>
+</div>
+
+@* ── Edit User Modal ── *@
+<div id="editModal" class="fixed inset-0 bg-slate-900/50 hidden items-center justify-center z-50 backdrop-blur-sm">
+    <div class="bg-white rounded-xl shadow-lg w-full max-w-md p-6">
+        <div class="flex items-center gap-3 mb-5">
+            <div class="bg-blue-100 p-2 rounded-lg">
+                <i data-lucide="user-cog" class="w-5 h-5 text-blue-600"></i>
+            </div>
+            <h2 class="text-xl font-bold text-slate-900">Edit User</h2>
+        </div>
+
+        <form method="post" asp-page-handler="Edit">
+            <input type="hidden" name="EditUserId" id="editUserId" />
+
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-slate-700 mb-1">Username</label>
+                <input type="text" id="editUsername" disabled
+                       class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm bg-slate-50 text-slate-500" />
+            </div>
+
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-slate-700 mb-1">Full Name</label>
+                <input type="text" name="EditFullName" id="editFullName"
+                       class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
+            </div>
+
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-slate-700 mb-1">Email</label>
+                <input type="email" name="EditEmail" id="editEmail"
+                       class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
+            </div>
+
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-slate-700 mb-1">Phone</label>
+                <input type="text" name="EditPhone" id="editPhone"
+                       class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
+            </div>
+
+            <div class="mb-6">
+                <label class="block text-sm font-medium text-slate-700 mb-1">Role</label>
+                <select name="EditRole" id="editRole"
+                        class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    <option value="User">User</option>
+                    <option value="Admin">Admin</option>
+                </select>
+            </div>
+
+            <div class="flex justify-end gap-3">
+                <button type="button" onclick="closeEditModal()"
+                        class="px-4 py-2 text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-lg font-medium transition-colors text-sm">
+                    Cancel
+                </button>
+                <button type="submit"
+                        class="px-4 py-2 text-white bg-blue-600 hover:bg-blue-700 rounded-lg font-medium transition-colors shadow-sm text-sm">
+                    Save Changes
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    function openEditModal(userId, username, fullName, email, phone, role) {
+        document.getElementById('editUserId').value   = userId;
+        document.getElementById('editUsername').value  = username;
+        document.getElementById('editFullName').value  = fullName;
+        document.getElementById('editEmail').value     = email;
+        document.getElementById('editPhone').value     = phone;
+        document.getElementById('editRole').value      = role;
+
+        document.getElementById('editModal').classList.remove('hidden');
+        document.getElementById('editModal').classList.add('flex');
+        lucide.createIcons();
+    }
+
+    function closeEditModal() {
+        document.getElementById('editModal').classList.add('hidden');
+        document.getElementById('editModal').classList.remove('flex');
+    }
+
+    // Close modal on backdrop click
+    document.getElementById('editModal').addEventListener('click', function (e) {
+        if (e.target === this) closeEditModal();
+    });
+
+    // Auto-hide alerts
+    ['successAlert', 'errorAlert'].forEach(function (id) {
+        var el = document.getElementById(id);
+        if (el) {
+            setTimeout(function () {
+                el.style.transition = 'opacity 0.5s';
+                el.style.opacity = '0';
+                setTimeout(function () { el.remove(); }, 500);
+            }, 4000);
+        }
+    });
+</script>

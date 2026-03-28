@@ -64,6 +64,11 @@
                 <i data-lucide="bar-chart-2" class="w-5 h-5"></i>
                 <span>Revenue Statistics</span>
             </a>
+
+            <a asp-page="/Admin/Users" class="flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors @(currentPage.Contains("/Admin/Users") ? "bg-blue-600 text-white" : "text-slate-300 hover:bg-slate-800 hover:text-white")">
+                <i data-lucide="users" class="w-5 h-5"></i>
+                <span>User Management</span>
+            </a>
         </nav>
 
         <div class="p-4 border-t border-slate-700">
