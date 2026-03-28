@@ -51,7 +51,9 @@ namespace TrainTicketSystem.Pages
                             DepartureTime = s.DepartureTime,
                             Price = s.Price
                         };
+            var now = DateTime.Now;
 
+            query = query.Where(x => x.DepartureTime >= now);
             if (SearchDate != null)
             {
                 query = query.Where(x => x.DepartureTime.Value.Date == SearchDate.Value.Date);
