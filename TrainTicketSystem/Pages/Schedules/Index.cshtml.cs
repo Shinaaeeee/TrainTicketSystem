@@ -1,7 +1,9 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
+using TrainTicketSystem.Hubs;
 using TrainTicketSystem.Models;
 
 namespace TrainTicketSystem.Pages.Schedules
@@ -9,10 +11,12 @@ namespace TrainTicketSystem.Pages.Schedules
     public class IndexModel : PageModel
     {
         private readonly TrainTicketDbContext _context;
+        private readonly IHubContext<ScheduleHub> _hubContext;
 
-        public IndexModel(TrainTicketDbContext context)
+        public IndexModel(TrainTicketDbContext context, IHubContext<ScheduleHub> hubContext)
         {
             _context = context;
+            _hubContext = hubContext;
         }
 
         public IList<Models.Schedule> ScheduleList { get; set; } = default!;
@@ -36,24 +40,26 @@ namespace TrainTicketSystem.Pages.Schedules
         public int TotalItems { get; set; }
         public int PageSize { get; set; } = 5;
 
+        private async Task LoadDropdownDataAsync()
+        {
+            var trains = await _context.Trains.ToListAsync();
+            TrainOptions = new SelectList(trains, "TrainId", "TrainName");
+
+            var routes = await _context.Routes.ToListAsync();
+            var routeDisplayList = routes.Select(r => new
+            {
+                RouteId = r.RouteId,
+                Display = $"{r.StartStation} - {r.EndStation}"
+            }).ToList();
+            RouteOptions = new SelectList(routeDisplayList, "RouteId", "Display");
+        }
+
         public async Task OnGetAsync()
         {
             if (_context.Schedules != null)
             {
-                // 1. Load danh sách Tàu và Tuyến đường cho Dropdown List
-                var trains = await _context.Trains.ToListAsync();
-                TrainOptions = new SelectList(trains, "TrainId", "TrainName");
+                await LoadDropdownDataAsync();
 
-                var routes = await _context.Routes.ToListAsync();
-                // Ghép nối Ga đi - Ga đến cho dễ nhìn
-                var routeDisplayList = routes.Select(r => new
-                {
-                    RouteId = r.RouteId,
-                    Display = $"{r.StartStation} - {r.EndStation}"
-                }).ToList();
-                RouteOptions = new SelectList(routeDisplayList, "RouteId", "Display");
-
-                // 2. Load danh sách Lịch trình, JOIN (Include) với bảng Train và Route
                 var query = _context.Schedules
                     .Include(s => s.Train)
                     .Include(s => s.Route)
@@ -93,10 +99,28 @@ namespace TrainTicketSystem.Pages.Schedules
 
         public async Task<IActionResult> OnPostCreateAsync()
         {
-            if (!ModelState.IsValid) return Page();
+            if (CurrentSchedule.DepartureTime < DateTime.Now)
+            {
+                ModelState.AddModelError("CurrentSchedule.DepartureTime", "Thời gian khởi hành không được trong quá khứ.");
+            }
+
+            if (CurrentSchedule.ArrivalTime <= CurrentSchedule.DepartureTime)
+            {
+                ModelState.AddModelError("CurrentSchedule.ArrivalTime", "Thời gian đến phải lớn hơn thời gian khởi hành.");
+            }
+
+            if (!ModelState.IsValid)
+            {
+                await LoadDropdownDataAsync();
+                ViewData["ShowCreateModal"] = true;
+                return Page();
+            }
 
             _context.Schedules.Add(CurrentSchedule);
             await _context.SaveChangesAsync();
+
+            await _hubContext.Clients.Group("schedules").SendAsync("ScheduleChanged", "create", CurrentSchedule.ScheduleId);
+
             return RedirectToPage("./Index");
         }
 
@@ -106,6 +130,9 @@ namespace TrainTicketSystem.Pages.Schedules
 
             _context.Attach(CurrentSchedule).State = EntityState.Modified;
             await _context.SaveChangesAsync();
+
+            await _hubContext.Clients.Group("schedules").SendAsync("ScheduleChanged", "edit", CurrentSchedule.ScheduleId);
+
             return RedirectToPage("./Index");
         }
 
@@ -116,6 +143,8 @@ namespace TrainTicketSystem.Pages.Schedules
             {
                 _context.Schedules.Remove(schedule);
                 await _context.SaveChangesAsync();
+
+                await _hubContext.Clients.Group("schedules").SendAsync("ScheduleChanged", "delete", id);
             }
             return RedirectToPage("./Index");
         }
