@@ -29,8 +29,16 @@ namespace TrainTicketSystem.Pages
         [BindProperty(SupportsGet = true)]
         public string SeatType { get; set; }
 
-        public void OnGet()
+        public IActionResult OnGet()
         {
+            
+            var role = HttpContext.Session.GetString("Role");
+
+            if (role == "Admin")
+            {
+                return RedirectToPage("/Admin/Index");
+            }
+
             var query = from s in _context.Schedules
                         join t in _context.Trains on s.TrainId equals t.TrainId
                         join r in _context.Routes on s.RouteId equals r.RouteId
@@ -43,8 +51,9 @@ namespace TrainTicketSystem.Pages
                             DepartureTime = s.DepartureTime,
                             Price = s.Price
                         };
+            var now = DateTime.Now;
 
-
+            query = query.Where(x => x.DepartureTime >= now);
             if (SearchDate != null)
             {
                 query = query.Where(x => x.DepartureTime.Value.Date == SearchDate.Value.Date);
@@ -60,8 +69,9 @@ namespace TrainTicketSystem.Pages
                 query = query.Where(x => x.ToStation.Contains(ToStation));
             }
 
-
             Trains = query.ToList();
+
+            return Page();
         }
     }
 }

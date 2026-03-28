@@ -24,16 +24,12 @@ namespace TrainTicketSystem.Pages.Schedules
         [BindProperty]
         public Models.Schedule CurrentSchedule { get; set; } = default!;
 
-        // 2 Biến này dùng để đổ dữ liệu vào Dropdown (Select list) cho Modal
         public SelectList TrainOptions { get; set; } = default!;
         public SelectList RouteOptions { get; set; } = default!;
 
         [BindProperty(SupportsGet = true)]
         public string? SearchTerm { get; set; }
 
-        // ==============================================
-        // CÁC BIẾN PHỤC VỤ PHÂN TRANG
-        // ==============================================
         [BindProperty(Name = "p", SupportsGet = true)]
         public int CurrentPage { get; set; } = 1;
         public int TotalPages { get; set; }
@@ -65,7 +61,6 @@ namespace TrainTicketSystem.Pages.Schedules
                     .Include(s => s.Route)
                     .AsQueryable();
 
-                // Lọc theo Tên tàu hoặc Ga đi/đến
                 if (!string.IsNullOrEmpty(SearchTerm))
                 {
                     query = query.Where(s =>
@@ -75,7 +70,6 @@ namespace TrainTicketSystem.Pages.Schedules
                     );
                 }
 
-                // Tính toán phân trang
                 TotalItems = await query.CountAsync();
                 TotalPages = (int)Math.Ceiling(TotalItems / (double)PageSize);
 
@@ -85,7 +79,7 @@ namespace TrainTicketSystem.Pages.Schedules
                 if (TotalItems > 0)
                 {
                     ScheduleList = await query
-                        .OrderByDescending(s => s.DepartureTime) // Sắp xếp chuyến mới nhất lên đầu
+                        .OrderByDescending(s => s.DepartureTime)
                         .Skip((CurrentPage - 1) * PageSize)
                         .Take(PageSize)
                         .ToListAsync();
@@ -126,7 +120,11 @@ namespace TrainTicketSystem.Pages.Schedules
 
         public async Task<IActionResult> OnPostEditAsync()
         {
-            if (!ModelState.IsValid) return Page();
+            if (!ModelState.IsValid)
+            {
+                await LoadDropdownDataAsync();
+                return Page();
+            }
 
             _context.Attach(CurrentSchedule).State = EntityState.Modified;
             await _context.SaveChangesAsync();

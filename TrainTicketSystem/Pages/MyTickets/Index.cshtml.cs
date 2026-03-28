@@ -24,11 +24,21 @@ public class IndexModel : PageModel
         var userId = HttpContext.Session.GetInt32("UserId");
         if (userId == null) return RedirectToPage("/Login");
 
-        var list = await _context.Bookings
+        var role = HttpContext.Session.GetString("Role") ?? string.Empty;
+
+        var query = _context.Bookings
             .Include(b => b.User)
             .Include(b => b.Schedule!).ThenInclude(s => s.Route)
             .Include(b => b.Schedule!).ThenInclude(s => s.Train)
-            .Where(b => b.UserId == userId)
+            .AsQueryable();
+
+        // Admin can view all bookings; normal users only their own
+        if (!string.Equals(role, "Admin", StringComparison.OrdinalIgnoreCase))
+        {
+            query = query.Where(b => b.UserId == userId);
+        }
+
+        var list = await query
             .OrderByDescending(b => b.BookingDate)
             .ToListAsync();
 
@@ -56,11 +66,20 @@ public class IndexModel : PageModel
         var userId = HttpContext.Session.GetInt32("UserId");
         if (userId == null) return RedirectToPage("/Login");
 
-        var list = await _context.Bookings
+        var role = HttpContext.Session.GetString("Role") ?? string.Empty;
+
+        var query = _context.Bookings
             .Include(b => b.User)
             .Include(b => b.Schedule!).ThenInclude(s => s.Route)
             .Include(b => b.Schedule!).ThenInclude(s => s.Train)
-            .Where(b => b.UserId == userId)
+            .AsQueryable();
+
+        if (!string.Equals(role, "Admin", StringComparison.OrdinalIgnoreCase))
+        {
+            query = query.Where(b => b.UserId == userId);
+        }
+
+        var list = await query
             .OrderByDescending(b => b.BookingDate)
             .ToListAsync();
 
@@ -113,9 +132,14 @@ public class IndexModel : PageModel
         var userId = HttpContext.Session.GetInt32("UserId");
         if (userId == null) return RedirectToPage("/Login");
 
+        var role = HttpContext.Session.GetString("Role") ?? string.Empty;
+
         var booking = await _context.Bookings.FindAsync(bookingId);
         if (booking == null) return NotFound();
-        if (booking.UserId != userId) return Forbid();
+
+        // Allow cancel when booking belongs to user or the current user is Admin
+        if (booking.UserId != userId && !string.Equals(role, "Admin", StringComparison.OrdinalIgnoreCase))
+            return Forbid();
 
         // Only allow canceling if not already cancelled
         if (string.Equals(booking.Status, "Cancelled", StringComparison.OrdinalIgnoreCase))
