@@ -181,7 +181,7 @@ public class SeatCheckoutItem
 
 public class PassengerInput
 {
-    public int SeatId { get; set; }
+    public int SeatId { get; set; } 
 
     [System.ComponentModel.DataAnnotations.Required(ErrorMessage = "Vui lòng nhập tên hành khách")]
     [System.ComponentModel.DataAnnotations.MaxLength(100)]

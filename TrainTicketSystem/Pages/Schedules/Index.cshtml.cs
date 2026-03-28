@@ -30,6 +30,18 @@ namespace TrainTicketSystem.Pages.Schedules
         [BindProperty(SupportsGet = true)]
         public string? SearchTerm { get; set; }
 
+        [BindProperty(SupportsGet = true)]
+        public DateTime? SearchDate { get; set; }
+
+        [BindProperty(SupportsGet = true)]
+        public DateTime? ArrivalDate { get; set; }
+
+        [BindProperty(SupportsGet = true)]
+        public string? PriceRange { get; set; }
+
+        [BindProperty(SupportsGet = true)]
+        public string? SortBy { get; set; }
+
         [BindProperty(Name = "p", SupportsGet = true)]
         public int CurrentPage { get; set; } = 1;
         public int TotalPages { get; set; }
@@ -70,16 +82,55 @@ namespace TrainTicketSystem.Pages.Schedules
                     );
                 }
 
+                if (SearchDate.HasValue)
+                {
+                    query = query.Where(x => x.DepartureTime.HasValue && x.DepartureTime.Value.Date == SearchDate.Value.Date);
+                }
+
+                if (ArrivalDate.HasValue)
+                {
+                    query = query.Where(x => x.ArrivalTime.HasValue && x.ArrivalTime.Value.Date == ArrivalDate.Value.Date);
+                }
+
+                if (!string.IsNullOrEmpty(PriceRange))
+                {
+                    switch (PriceRange)
+                    {
+                        case "0-200k":
+                            query = query.Where(x => x.Price >= 0 && x.Price <= 200000);
+                            break;
+                        case "200k-500k":
+                            query = query.Where(x => x.Price > 200000 && x.Price <= 500000);
+                            break;
+                        case "500k-800k":
+                            query = query.Where(x => x.Price > 500000 && x.Price <= 800000);
+                            break;
+                        case "800k-1000k":
+                            query = query.Where(x => x.Price > 800000 && x.Price <= 1000000);
+                            break;
+                    }
+                }
+
                 TotalItems = await query.CountAsync();
                 TotalPages = (int)Math.Ceiling(TotalItems / (double)PageSize);
 
                 if (CurrentPage < 1) CurrentPage = 1;
                 if (CurrentPage > TotalPages && TotalPages > 0) CurrentPage = TotalPages;
 
+                query = SortBy switch
+                {
+                    "price_asc" => query.OrderBy(x => x.Price),
+                    "price_desc" => query.OrderByDescending(x => x.Price),
+                    "departure_asc" => query.OrderBy(x => x.DepartureTime),
+                    "departure_desc" => query.OrderByDescending(x => x.DepartureTime),
+                    "arrival_asc" => query.OrderBy(x => x.ArrivalTime),
+                    "arrival_desc" => query.OrderByDescending(x => x.ArrivalTime),
+                    _ => query.OrderByDescending(s => s.DepartureTime)
+                };
+
                 if (TotalItems > 0)
                 {
                     ScheduleList = await query
-                        .OrderByDescending(s => s.DepartureTime)
                         .Skip((CurrentPage - 1) * PageSize)
                         .Take(PageSize)
                         .ToListAsync();

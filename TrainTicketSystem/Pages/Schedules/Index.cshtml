@@ -12,30 +12,63 @@
     </button>
 </div>
 
-<form method="get" class="flex flex-wrap gap-4 mb-6">
-    <div class="flex-1 min-w-[300px]">
-        <div class="relative">
+<form method="get" class="bg-white p-5 rounded-xl shadow-sm border border-slate-200 mb-6 space-y-4">
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <!-- Search Term -->
+        <div class="relative col-span-1 md:col-span-3 lg:col-span-1">
             <i data-lucide="search" class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-[18px] h-[18px]"></i>
-            <input type="text" name="SearchTerm" value="@Model.SearchTerm" placeholder="Search by train name or station..." class="w-full pl-10 pr-4 py-2 border border-slate-300 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all shadow-sm" />
+            <input type="text" name="SearchTerm" value="@Model.SearchTerm" placeholder="Search by train name or station..." class="w-full pl-10 pr-4 py-2 border border-slate-300 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all" />
+        </div>
+        
+        <!-- Date Filters -->
+        <div class="flex gap-4 col-span-1 lg:col-span-2">
+            <div class="relative flex-1">
+                <span class="absolute -top-2.5 left-3 px-1 text-xs font-medium text-slate-500 bg-white">Departure</span>
+                <input type="date" name="SearchDate" value="@(Model.SearchDate?.ToString("yyyy-MM-dd"))" class="w-full px-4 py-2 border border-slate-300 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all" />
+            </div>
+            <div class="relative flex-1">
+                 <span class="absolute -top-2.5 left-3 px-1 text-xs font-medium text-slate-500 bg-white">Arrival</span>
+                <input type="date" name="ArrivalDate" value="@(Model.ArrivalDate?.ToString("yyyy-MM-dd"))" class="w-full px-4 py-2 border border-slate-300 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all" />
+            </div>
         </div>
     </div>
-
-    <button type="submit" class="bg-slate-800 hover:bg-slate-900 text-white px-5 py-2 rounded-lg text-sm font-medium transition-colors shadow-sm">
-        Search
-    </button>
-
-    @if (!string.IsNullOrEmpty(Model.SearchTerm))
-    {
-        <a href="/Schedules" class="bg-red-50 hover:bg-red-100 border border-red-200 text-red-600 px-5 py-2 rounded-lg text-sm font-medium transition-colors flex items-center shadow-sm">
-            Clear
-        </a>
-    }
-
-    <select class="w-40 border border-slate-300 rounded-lg py-2 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-slate-700 shadow-sm">
-        <option value="all">Filter by Train</option>
-        <option value="se1">SE1</option>
-        <option value="se2">SE2</option>
-    </select>
+    
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div class="relative flex-1">
+             <span class="absolute -top-2.5 left-3 px-1 text-xs font-medium text-slate-500 bg-white">Khoảng giá</span>
+            <select name="PriceRange" class="w-full px-4 py-2 border border-slate-300 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all appearance-none" style="background-image: url('data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'12\' height=\'12\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'%2364748b\' stroke-width=\'2.5\'%3E%3Cpolyline points=\'6 9 12 15 18 9\'/%3E%3C/svg%3E'); background-repeat: no-repeat; background-position: right .75rem center;">
+                <option value="" selected="@(Model.PriceRange == "")">Tất cả mức giá</option>
+                <option value="0-200k" selected="@(Model.PriceRange == "0-200k")">Dưới 200.000đ</option>
+                <option value="200k-500k" selected="@(Model.PriceRange == "200k-500k")">200.000đ - 500.000đ</option>
+                <option value="500k-800k" selected="@(Model.PriceRange == "500k-800k")">500.000đ - 800.000đ</option>
+                <option value="800k-1000k" selected="@(Model.PriceRange == "800k-1000k")">800.000đ - 1.000.000đ</option>
+            </select>
+        </div>
+        <div class="relative flex-1">
+            <span class="absolute -top-2.5 left-3 px-1 text-xs font-medium text-slate-500 bg-white">Sort By</span>
+            <select name="SortBy" class="w-full px-4 py-2 border border-slate-300 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all appearance-none" style="background-image: url('data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'12\' height=\'12\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'%2364748b\' stroke-width=\'2.5\'%3E%3Cpolyline points=\'6 9 12 15 18 9\'/%3E%3C/svg%3E'); background-repeat: no-repeat; background-position: right .75rem center;">
+                <option value="" selected="@(Model.SortBy == "")">Mặc định (Khởi hành mới nhất)</option>
+                <option value="departure_asc" selected="@(Model.SortBy == "departure_asc")">Giờ đi sớm nhất</option>
+                <option value="departure_desc" selected="@(Model.SortBy == "departure_desc")">Giờ đi muộn nhất</option>
+                <option value="arrival_asc" selected="@(Model.SortBy == "arrival_asc")">Giờ đến sớm nhất</option>
+                <option value="arrival_desc" selected="@(Model.SortBy == "arrival_desc")">Giờ đến muộn nhất</option>
+                <option value="price_asc" selected="@(Model.SortBy == "price_asc")">Giá tăng dần</option>
+                <option value="price_desc" selected="@(Model.SortBy == "price_desc")">Giá giảm dần</option>
+            </select>
+        </div>
+        
+        <div class="flex items-center gap-2">
+            <button type="submit" class="flex-1 bg-slate-800 hover:bg-slate-900 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors shadow-sm flex items-center justify-center gap-2">
+                <i data-lucide="filter" class="w-4 h-4"></i> Filter
+            </button>
+            @if (!string.IsNullOrEmpty(Model.SearchTerm) || Model.SearchDate != null || Model.ArrivalDate != null || !string.IsNullOrEmpty(Model.PriceRange) || !string.IsNullOrEmpty(Model.SortBy))
+            {
+                <a href="/Schedules" class="bg-red-50 hover:bg-red-100 border border-red-200 text-red-600 px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center justify-center shadow-sm" title="Clear filter">
+                    <i data-lucide="x" class="w-4 h-4"></i>
+                </a>
+            }
+        </div>
+    </div>
 </form>
 
 <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
@@ -121,8 +154,12 @@
             <span class="font-semibold">@Model.TotalItems</span> schedules
         </p>
 
+        @{
+            var queryParams = $"SearchTerm={Model.SearchTerm}&SearchDate={(Model.SearchDate?.ToString("yyyy-MM-dd"))}&ArrivalDate={(Model.ArrivalDate?.ToString("yyyy-MM-dd"))}&PriceRange={Model.PriceRange}&SortBy={Model.SortBy}";
+        }
+
         <div class="flex items-center gap-2">
-            <a href="?SearchTerm=@Model.SearchTerm&p=@(Model.CurrentPage - 1)"
+            <a href="?@(queryParams)&p=@(Model.CurrentPage - 1)"
                class="px-3 py-2 border border-slate-300 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors @(Model.CurrentPage <= 1 ? "pointer-events-none opacity-50 bg-slate-50" : "")">
                 Previous
             </a>
@@ -130,13 +167,13 @@
                 int displayPages = Model.TotalPages > 0 ? Model.TotalPages : 1;
                 for (int i = 1; i <= displayPages; i++)
                 {
-                    <a href="?SearchTerm=@Model.SearchTerm&p=@i"
+                    <a href="?@(queryParams)&p=@i"
                        class="px-3 py-2 rounded-lg text-sm font-medium transition-colors @(Model.CurrentPage == i ? "bg-blue-600 text-white shadow-sm" : "border border-slate-300 text-slate-700 hover:bg-slate-50")">
                         @i
                     </a>
                 }
             }
-            <a href="?SearchTerm=@Model.SearchTerm&p=@(Model.CurrentPage + 1)"
+            <a href="?@(queryParams)&p=@(Model.CurrentPage + 1)"
                class="px-3 py-2 border border-slate-300 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors @(Model.CurrentPage >= Model.TotalPages ? "pointer-events-none opacity-50 bg-slate-50" : "")">
                 Next
             </a>
