@@ -1,136 +1,133 @@
 ﻿@page
 @model TrainTicketSystem.Pages.UserProfile.ProfileModel
 @{
-    ViewData["HideNavbar"] = true;
-}
-@{
     ViewData["Title"] = "User Profile";
+    Layout = "~/Pages/Shared/UserLayout.cshtml";
 }
 
-<style>
-    
-    body {
-        background: linear-gradient(135deg, #f8fafc, #e2e8f0);
-        min-height: 100vh;
-        font-family: 'Segoe UI', -apple-system, sans-serif;
-    }
+<div class="row justify-content-center">
+    <div class="col-md-7 col-lg-5">
 
-    /* Center */
-    .container {
-        margin-top: 80px;
-    }
-
-    /* Card */
-    .profile-card {
-        max-width: 500px;
-        margin: auto;
-        border-radius: 16px;
-        border: 1px solid #e2e8f0;
-        box-shadow: 0 8px 30px rgba(0,0,0,.08);
-        overflow: hidden;
-        background: #fff;
-    }
-
-    
-    .card-header {
-        background: linear-gradient(135deg, #3b82f6, #6366f1) !important;
-        border: none;
-        font-weight: 700;
-    }
-
-    /* Input */
-    .form-control {
-        border-radius: 10px;
-        padding: 10px 12px;
-        background: #f8fafc;
-        border: 1px solid #cbd5e1;
-        transition: 0.2s;
-    }
-
-        .form-control:focus {
-            border-color: #3b82f6;
-            background: #fff;
-            box-shadow: 0 0 0 3px rgba(59,130,246,.15);
-        }
-
-    /* Label */
-    label {
-        font-weight: 600;
-        font-size: 0.85rem;
-        color: #475569;
-    }
-
-
-    .btn-primary {
-        background: linear-gradient(135deg, #3b82f6, #6366f1);
-        border: none;
-        border-radius: 10px;
-        font-weight: 700;
-        padding: 10px;
-        transition: 0.2s;
-    }
-
-        .btn-primary:hover {
-            transform: translateY(-1px);
-            box-shadow: 0 6px 20px rgba(59,130,246,.3);
-        }
-
-    /* Message */
-    .text-success {
-        font-weight: 600;
-    }
-
-    .text-danger {
-        font-size: 0.8rem;
-    }
-</style>
-
-<div class="container mt-5">
-
-    <div class="card profile-card">
-
-        <div class="card-header bg-dark text-white text-center">
-            <h3>👤 User Profile</h3>
+        <div class="text-center mb-4">
+            <div class="bg-dark text-white rounded-circle d-inline-flex align-items-center justify-content-center"
+                 style="width:72px;height:72px;font-size:2rem;">
+                <i class="bi bi-person-fill"></i>
+            </div>
+            <h4 class="mt-2 mb-0">@Model.UserInfo?.FullName</h4>
+            <small class="text-muted">@@@Model.UserInfo?.Username</small>
         </div>
 
-        <div class="card-body">
+        @* ── Success Toast ── *@
+        @if (TempData["SuccessMessage"] != null)
+        {
+            <div class="alert alert-success d-flex align-items-center" role="alert" id="successAlert">
+                <i class="bi bi-check-circle-fill me-2"></i>
+                <div>@TempData["SuccessMessage"]</div>
+            </div>
+        }
 
-            <form method="post">
-
-                <div class="mb-3">
-                    <label>Username</label>
-                    <input class="form-control"
-                           value="@Model.User?.Username"
-                           readonly />
+        @* ── Profile Info (read-only view) ── *@
+        @if (!Model.Edit)
+        {
+            <div class="card shadow-sm">
+                <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                    <span class="fw-semibold">Profile Information</span>
+                    <a href="?Edit=true" class="btn btn-sm btn-outline-primary">
+                        <i class="bi bi-pencil-square me-1"></i>Edit
+                    </a>
                 </div>
-
-                <div class="mb-3">
-                    <label>Full Name</label>
-                    <input asp-for="User.FullName" class="form-control" />
+                <div class="card-body">
+                    <div class="mb-3 row">
+                        <label class="col-sm-4 col-form-label text-muted">Username</label>
+                        <div class="col-sm-8">
+                            <p class="form-control-plaintext fw-medium">@Model.UserInfo?.Username</p>
+                        </div>
+                    </div>
+                    <div class="mb-3 row">
+                        <label class="col-sm-4 col-form-label text-muted">Full Name</label>
+                        <div class="col-sm-8">
+                            <p class="form-control-plaintext">@(Model.UserInfo?.FullName ?? "—")</p>
+                        </div>
+                    </div>
+                    <div class="mb-3 row">
+                        <label class="col-sm-4 col-form-label text-muted">Email</label>
+                        <div class="col-sm-8">
+                            <p class="form-control-plaintext">@(Model.UserInfo?.Email ?? "—")</p>
+                        </div>
+                    </div>
+                    <div class="mb-2 row">
+                        <label class="col-sm-4 col-form-label text-muted">Phone</label>
+                        <div class="col-sm-8">
+                            <p class="form-control-plaintext">@(Model.UserInfo?.Phone ?? "—")</p>
+                        </div>
+                    </div>
+                    <div class="mb-0 row">
+                        <label class="col-sm-4 col-form-label text-muted">Role</label>
+                        <div class="col-sm-8">
+                            <p class="form-control-plaintext">
+                                <span class="badge bg-secondary">@(Model.UserInfo?.Role ?? "User")</span>
+                            </p>
+                        </div>
+                    </div>
                 </div>
-
-                <div class="mb-3">
-                    <label>Email</label>
-                    <input asp-for="User.Email" class="form-control" />
-                    <span asp-validation-for="User.Email" class="text-danger"></span>
+            </div>
+        }
+        else
+        {
+            @* ── Edit Form ── *@
+            <div class="card shadow-sm">
+                <div class="card-header bg-white">
+                    <span class="fw-semibold">Edit Profile</span>
                 </div>
+                <div class="card-body">
+                    <form method="post">
+                        <div class="mb-3">
+                            <label class="form-label text-muted">Username</label>
+                            <input class="form-control" value="@Model.UserInfo?.Username" readonly disabled />
+                        </div>
 
-                <div class="mb-3">
-                    <label>Phone</label>
-                    <input asp-for="User.Phone" class="form-control" />
-                    <span asp-validation-for="User.Phone" class="text-danger"></span>
+                        <div class="mb-3">
+                            <label asp-for="Input.FullName" class="form-label text-muted">Full Name</label>
+                            <input asp-for="Input.FullName" class="form-control" />
+                            <span asp-validation-for="Input.FullName" class="text-danger small"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="Input.Email" class="form-label text-muted">Email</label>
+                            <input asp-for="Input.Email" class="form-control" />
+                            <span asp-validation-for="Input.Email" class="text-danger small"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="Input.Phone" class="form-label text-muted">Phone</label>
+                            <input asp-for="Input.Phone" class="form-control" />
+                            <span asp-validation-for="Input.Phone" class="text-danger small"></span>
+                        </div>
+
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-primary flex-fill">
+                                <i class="bi bi-check-lg me-1"></i>Save Changes
+                            </button>
+                            <a href="/UserProfile/Profile" class="btn btn-outline-secondary flex-fill">Cancel</a>
+                        </div>
+                    </form>
                 </div>
-
-                <button class="btn btn-primary w-100">
-                    Update Profile
-                </button>
-
-            </form>
-
-            <p class="text-success text-center mt-3">
-                @ViewData["Message"]
-            </p>
-
-        </div>
+            </div>
+        }
 
     </div>
+</div>
+
+@* Auto-hide success alert after 3 seconds *@
+<script>
+        (function () {
+            var alert = document.getElementById('successAlert');
+            if (alert) {
+                setTimeout(function () {
+                    alert.style.transition = 'opacity 0.5s';
+                    alert.style.opacity = '0';
+                    setTimeout(function () { alert.remove(); }, 500);
+                }, 3000);
+            }
+    })();
+</script>
