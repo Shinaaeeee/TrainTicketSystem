@@ -1,4 +1,4 @@
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using TrainTicketSystem.Hubs;
 using TrainTicketSystem.Jobs;
 using TrainTicketSystem.Models;
@@ -18,6 +18,7 @@ builder.Services.AddScoped<UserSession>();
 
 // ---- SignalR (real-time seat tracking) ----
 builder.Services.AddSignalR();
+
 
 // ---- Seat service & background cleanup job ----
 builder.Services.AddScoped<ISeatService, SeatService>();
@@ -48,6 +49,7 @@ app.MapRazorPages();
 // ---- SignalR Hub endpoints ----
 app.MapHub<SeatHub>("/seatHub");
 app.MapHub<BookingNotificationHub>("/bookingNotificationHub");
-
+// Đặt cùng chỗ với các Hub khác của bạn
+app.MapHub<TrainTicketSystem.Hubs.ScheduleHub>("/scheduleHub");
 app.Run();
 

@@ -2,17 +2,22 @@
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.SignalR; // Thêm namespace này
 using TrainTicketSystem.Models;
+using TrainTicketSystem.Hubs; // Thêm namespace chứa ScheduleHub của bạn
 
 namespace TrainTicketSystem.Pages.Schedules
 {
     public class IndexModel : PageModel
     {
         private readonly TrainTicketDbContext _context;
+        private readonly IHubContext<ScheduleHub> _hubContext; // Khai báo HubContext
 
-        public IndexModel(TrainTicketDbContext context)
+        // Tiêm IHubContext vào Constructor
+        public IndexModel(TrainTicketDbContext context, IHubContext<ScheduleHub> hubContext)
         {
             _context = context;
+            _hubContext = hubContext;
         }
 
         public IList<Models.Schedule> ScheduleList { get; set; } = default!;
@@ -32,7 +37,6 @@ namespace TrainTicketSystem.Pages.Schedules
         public int TotalItems { get; set; }
         public int PageSize { get; set; } = 5;
 
-        // Hàm hỗ trợ load dữ liệu cho Dropdown để tái sử dụng
         private async Task LoadDropdownDataAsync()
         {
             var trains = await _context.Trains.ToListAsync();
@@ -51,10 +55,8 @@ namespace TrainTicketSystem.Pages.Schedules
         {
             if (_context.Schedules != null)
             {
-                // 1. Load danh sách Tàu và Tuyến đường
                 await LoadDropdownDataAsync();
 
-                // 2. Load danh sách Lịch trình
                 var query = _context.Schedules
                     .Include(s => s.Train)
                     .Include(s => s.Route)
@@ -92,13 +94,11 @@ namespace TrainTicketSystem.Pages.Schedules
 
         public async Task<IActionResult> OnPostCreateAsync()
         {
-            // Validate: Thời gian khởi hành phải từ hiện tại trở đi
             if (CurrentSchedule.DepartureTime < DateTime.Now)
             {
                 ModelState.AddModelError("CurrentSchedule.DepartureTime", "Thời gian khởi hành không được trong quá khứ.");
             }
 
-            // Validate: Thời gian đến phải sau thời gian đi
             if (CurrentSchedule.ArrivalTime <= CurrentSchedule.DepartureTime)
             {
                 ModelState.AddModelError("CurrentSchedule.ArrivalTime", "Thời gian đến phải lớn hơn thời gian khởi hành.");
@@ -106,15 +106,17 @@ namespace TrainTicketSystem.Pages.Schedules
 
             if (!ModelState.IsValid)
             {
-                // Phải load lại dropdown nếu không sẽ bị lỗi Null
                 await LoadDropdownDataAsync();
-                // Kích hoạt biến để tự động mở lại modal báo lỗi
                 ViewData["ShowCreateModal"] = true;
                 return Page();
             }
 
             _context.Schedules.Add(CurrentSchedule);
             await _context.SaveChangesAsync();
+
+            // Bắn tín hiệu sau khi Create thành công
+            await _hubContext.Clients.All.SendAsync("ReceiveScheduleUpdate");
+
             return RedirectToPage("./Index");
         }
 
@@ -128,6 +130,10 @@ namespace TrainTicketSystem.Pages.Schedules
 
             _context.Attach(CurrentSchedule).State = EntityState.Modified;
             await _context.SaveChangesAsync();
+
+            // Bắn tín hiệu sau khi Edit thành công
+            await _hubContext.Clients.All.SendAsync("ReceiveScheduleUpdate");
+
             return RedirectToPage("./Index");
         }
 
@@ -138,6 +144,9 @@ namespace TrainTicketSystem.Pages.Schedules
             {
                 _context.Schedules.Remove(schedule);
                 await _context.SaveChangesAsync();
+
+                // Bắn tín hiệu sau khi Delete thành công
+                await _hubContext.Clients.All.SendAsync("ReceiveScheduleUpdate");
             }
             return RedirectToPage("./Index");
         }

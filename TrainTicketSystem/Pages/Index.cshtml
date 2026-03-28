@@ -490,3 +490,31 @@
         .hp-hero-title { font-size: 1.4rem; }
     }
 </style>
+
+@section Scripts {
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/7.0.12/signalr.min.js"></script>
+
+    <script>
+        // 1. Khởi tạo kết nối tới ScheduleHub
+        const scheduleConnection = new signalR.HubConnectionBuilder()
+            .withUrl("/scheduleHub")
+            .withAutomaticReconnect() // Tự động kết nối lại nếu mạng chập chờn
+            .build();
+
+        // 2. Lắng nghe sự kiện "ReceiveScheduleUpdate" từ Admin/Server
+        scheduleConnection.on("ReceiveScheduleUpdate", function () {
+            console.log("Đã phát hiện thay đổi lịch trình từ Admin. Đang tải lại trang...");
+            // Tải lại trang để khách hàng thấy danh sách chuyến tàu mới nhất
+            window.location.reload();
+        });
+
+        // 3. Bắt đầu kết nối
+        scheduleConnection.start()
+            .then(function () {
+                console.log("Trang chủ đã kết nối SignalR (ScheduleHub) thành công!");
+            })
+            .catch(function (err) {
+                console.error("Lỗi kết nối Hub: ", err.toString());
+            });
+    </script>
+}
