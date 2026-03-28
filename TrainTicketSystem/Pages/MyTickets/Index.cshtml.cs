@@ -1,6 +1,8 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
+using TrainTicketSystem.Hubs;
 using TrainTicketSystem.Models;
 using System.Text;
 using ClosedXML.Excel;
@@ -11,10 +13,12 @@ namespace TrainTicketSystem.Pages.MyTickets;
 public class IndexModel : PageModel
 {
     private readonly TrainTicketDbContext _context;
+    private readonly IHubContext<TicketHub> _ticketHub;
 
-    public IndexModel(TrainTicketDbContext context)
+    public IndexModel(TrainTicketDbContext context, IHubContext<TicketHub> ticketHub)
     {
         _context = context;
+        _ticketHub = ticketHub;
     }
 
     public List<BookingViewModel> Bookings { get; set; } = new();
@@ -148,6 +152,9 @@ public class IndexModel : PageModel
         booking.Status = "Cancelled";
         await _context.SaveChangesAsync();
 
+        await _ticketHub.Clients.Group("tickets").SendAsync("TicketChanged", "cancelled", bookingId);
+
         return RedirectToPage();
     }
 }
+

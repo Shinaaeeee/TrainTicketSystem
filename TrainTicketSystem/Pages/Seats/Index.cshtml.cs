@@ -1,7 +1,9 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
+using TrainTicketSystem.Hubs;
 using TrainTicketSystem.Models;
 
 namespace TrainTicketSystem.Pages.Seats;
@@ -9,10 +11,12 @@ namespace TrainTicketSystem.Pages.Seats;
 public class Index : PageModel
 {
     private readonly TrainTicketDbContext _context;
+    private readonly IHubContext<SeatCrudHub> _hubContext;
 
-    public Index(TrainTicketDbContext context)
+    public Index(TrainTicketDbContext context, IHubContext<SeatCrudHub> hubContext)
     {
         _context = context;
+        _hubContext = hubContext;
     }
 
     // ── Hiển thị danh sách ──────────────────────────────────────────
@@ -27,6 +31,12 @@ public class Index : PageModel
     [BindProperty(SupportsGet = true)]
     public int? FilterSeatTypeId { get; set; }
 
+    // --- THÊM CODE PHÂN TRANG Ở ĐÂY ---
+    [BindProperty(SupportsGet = true)]
+    public int PageIndex { get; set; } = 1;
+    public int TotalPages { get; set; }
+    public int TotalItems { get; set; }
+
     // ── Form data cho Create / Edit modal ───────────────────────────
     // [BindProperty] cho phép Razor Pages tự map form fields vào object này
     // khi có POST request, không cần đọc từng field thủ công.
@@ -38,27 +48,40 @@ public class Index : PageModel
     {
         await PopulateDropdownsAsync();
 
+        int pageSize = 10; // Số lượng ghế trên mỗi trang (bạn có thể tuỳ chỉnh)
+        if (PageIndex < 1) PageIndex = 1;
+
         var query = _context.Seats
             .Include(s => s.Train)
             .Include(s => s.SeatType)
             .AsQueryable();
 
+        // 1. Áp dụng các bộ lọc (nếu có)
         if (FilterTrainId.HasValue)
             query = query.Where(s => s.TrainId == FilterTrainId.Value);
 
         if (FilterSeatTypeId.HasValue)
             query = query.Where(s => s.SeatTypeId == FilterSeatTypeId.Value);
 
+        // 2. Đếm tổng số bản ghi thoả mãn điều kiện lọc để tính số trang
+        TotalItems = await query.CountAsync();
+        TotalPages = (int)Math.Ceiling(TotalItems / (double)pageSize);
+
+        // 3. Phân trang và lấy dữ liệu
         Seats = await query
+            .OrderBy(s => s.SeatId)
+            .Skip((PageIndex - 1) * pageSize)
+            .Take(pageSize)
             .Select(s => new SeatViewModel
             {
                 SeatId = s.SeatId,
+                TrainId = s.TrainId ?? 0,
                 TrainName = s.Train!.TrainName ?? "N/A",
                 SeatNumber = s.SeatNumber ?? "",
+                SeatTypeId = s.SeatTypeId ?? 0,
                 TypeName = s.SeatType!.TypeName ?? "N/A",
                 PriceMultiplier = s.SeatType!.PriceMultiplier ?? 0
             })
-            .OrderBy(s => s.SeatId)
             .ToListAsync();
     }
 
@@ -80,6 +103,8 @@ public class Index : PageModel
 
         _context.Seats.Add(seat);
         await _context.SaveChangesAsync();
+
+        await _hubContext.Clients.Group("seats").SendAsync("SeatChanged", "create", seat.SeatId);
 
         TempData["SuccessMessage"] = $"Seat \"{seat.SeatNumber}\" created successfully.";
         return RedirectToPage();
@@ -109,6 +134,8 @@ public class Index : PageModel
 
         await _context.SaveChangesAsync();
 
+        await _hubContext.Clients.Group("seats").SendAsync("SeatChanged", "edit", seat.SeatId);
+
         TempData["SuccessMessage"] = $"Seat \"{seat.SeatNumber}\" updated successfully.";
         return RedirectToPage();
     }
@@ -127,6 +154,8 @@ public class Index : PageModel
 
         _context.Seats.Remove(seat);
         await _context.SaveChangesAsync();
+
+        await _hubContext.Clients.Group("seats").SendAsync("SeatChanged", "delete", id);
 
         TempData["SuccessMessage"] = "Seat deleted successfully.";
         return RedirectToPage();
@@ -157,8 +186,10 @@ public class Index : PageModel
 public class SeatViewModel
 {
     public int SeatId { get; set; }
+    public int TrainId { get; set; }
     public string TrainName { get; set; } = string.Empty;
     public string SeatNumber { get; set; } = string.Empty;
+    public int SeatTypeId { get; set; }
     public string TypeName { get; set; } = string.Empty;
     public decimal PriceMultiplier { get; set; }
 }

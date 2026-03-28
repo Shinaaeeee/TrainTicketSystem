@@ -5,12 +5,8 @@
     Layout = "~/Pages/Shared/_CustomerLayout.cshtml";
 }
 
-@* ══════════════════════════════════════════════════════════ *@
-@*  FULL-PAGE WRAPPER                                        *@
-@* ══════════════════════════════════════════════════════════ *@
 <div id="seatmap-page">
 
-    @* ── Route Hero ── *@
     <div class="route-hero">
         <div class="hero-inner">
             <div class="route-pill">
@@ -65,7 +61,6 @@
         </div>
     </div>
 
-    @* ── Countdown Banner ── *@
     <div id="countdown-bar" class="countdown-bar" style="display:none;" role="alert">
         <div class="countdown-inner">
             <div class="countdown-icon-wrap">
@@ -84,10 +79,8 @@
         </div>
     </div>
 
-    @* ── Main Layout ── *@
     <div class="seatmap-layout">
 
-        @* ── Left: Seat Map ── *@
         <div class="seatmap-panel">
             <div class="panel-header">
                 <h2 class="panel-title">
@@ -112,7 +105,6 @@
                 </div>
             </div>
 
-            @* Carriage shell *@
             <div class="carriage-wrap">
                 <div class="carriage-nose">
                     <svg viewBox="0 0 80 40" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -130,12 +122,10 @@
                     <div id="seat-map" class="seat-grid">
                         @{
                             var seats = Model.Seats.OrderBy(s => s.SeatNumber).ToList();
-                            int total = seats.Count;
-                            // Group seats into rows of 4 (2 left + aisle + 2 right)
+                            var total = seats.Count;
                             for (int i = 0; i < total; i += 4)
                             {
                                 <div class="seat-row">
-                                    @* Left pair *@
                                     @for (int j = i; j < Math.Min(i + 2, total); j++)
                                     {
                                         var seat = seats[j];
@@ -155,9 +145,7 @@
                                             </span>
                                         </button>
                                     }
-                                    @* Aisle *@
                                     <div class="aisle"></div>
-                                    @* Right pair *@
                                     @for (int j = i + 2; j < Math.Min(i + 4, total); j++)
                                     {
                                         var seat = seats[j];
@@ -183,13 +171,9 @@
                     </div>
                 </div>
 
-                <div class="carriage-tail">
-                    <span>Cuối tàu</span>
-                </div>
             </div>
         </div>
 
-        @* ── Right: Booking Summary ── *@
         <div class="summary-panel">
             <div class="summary-card">
                 <div class="summary-header">
@@ -229,7 +213,6 @@
                 </form>
             </div>
 
-            @* Price info card *@
             <div class="info-card">
                 <div class="info-card-title">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -247,7 +230,6 @@
     </div>
 </div>
 
-@* ── Toast ── *@
 <div class="toast-container position-fixed bottom-0 end-0 p-3" style="z-index:1100">
     <div id="seat-toast" class="seat-toast toast align-items-center border-0" role="alert" aria-live="assertive">
         <div class="d-flex align-items-center gap-2 px-3 py-1">
@@ -258,11 +240,7 @@
     </div>
 </div>
 
-@* ══════════════════════════════════════════════════════════ *@
-@*  STYLES                                                   *@
-@* ══════════════════════════════════════════════════════════ *@
 <style>
-    /* ── Variables ── */
     :root {
         --navy:      #0F172A;
         --navy-800:  #1E293B;
@@ -296,7 +274,6 @@
         padding-bottom: 3rem;
     }
 
-    /* ── Route Hero ── */
     .route-hero {
         background: linear-gradient(135deg, var(--navy) 0%, #1E3A5F 60%, #1a4480 100%);
         padding: 2.5rem 0 2.5rem;
@@ -393,7 +370,6 @@
     }
     .train-chip { background: rgba(59,130,246,0.3); border-color: rgba(59,130,246,0.5); }
 
-    /* ── Countdown ── */
     .countdown-bar {
         background: linear-gradient(135deg, #78350F, #B45309);
         padding: 10px 0;
@@ -453,7 +429,6 @@
         .countdown-inner { gap: 10px; }
     }
 
-    /* ── Layout ── */
     .seatmap-layout {
         max-width: 900px;
         margin: 0 auto;
@@ -470,7 +445,6 @@
         }
     }
 
-    /* ── Seat Map Panel ── */
     .seatmap-panel {
         background: white;
         border-radius: var(--radius-lg);
@@ -498,7 +472,6 @@
     }
     .panel-title svg { color: var(--blue); }
 
-    /* ── Legend ── */
     .legend { display: flex; gap: 14px; flex-wrap: wrap; }
     .legend-item {
         display: flex;
@@ -518,7 +491,6 @@
     .legend-dot.held      { background: var(--amber); }
     .legend-dot.booked    { background: var(--rose); }
 
-    /* ── Carriage ── */
     .carriage-wrap {
         padding: 1.5rem;
         position: relative;
@@ -558,7 +530,6 @@
     .left-label  { left: 60px; }
     .right-label { right: 60px; }
 
-    /* ── Seat Grid ── */
     .seat-grid { display: flex; flex-direction: column; gap: 10px; }
     .seat-row {
         display: grid;
@@ -580,7 +551,6 @@
         border-radius: 1px;
     }
 
-    /* ── Seat Button ── */
     .seat-btn {
         display: flex;
         flex-direction: column;
@@ -607,7 +577,7 @@
         width: 22px; height: 22px;
     }
 
-    /* States */
+
     .seat-btn.available {
         background: var(--emerald-100);
         border-color: var(--emerald);
@@ -649,7 +619,6 @@
         opacity: .75;
     }
 
-    /* ── Summary Panel ── */
     .summary-panel { display: flex; flex-direction: column; gap: 1rem; }
 
     .summary-card {
@@ -759,7 +728,6 @@
         box-shadow: none;
     }
 
-    /* ── Info Card ── */
     .info-card {
         background: white;
         border-radius: var(--radius-lg);
@@ -798,7 +766,6 @@
         font-weight: 800;
     }
 
-    /* ── Toast ── */
     .seat-toast {
         border-radius: 12px !important;
         min-width: 280px;
@@ -807,16 +774,12 @@
         box-shadow: var(--shadow-lg) !important;
     }
 
-    /* ── Reduced Motion ── */
     @@media (prefers-reduced-motion: reduce) {
         .seat-btn, .checkout-btn { transition: none; }
         .seat-btn:hover { transform: none; }
     }
 </style>
 
-@* ══════════════════════════════════════════════════════════ *@
-@*  SCRIPTS                                                  *@
-@* ══════════════════════════════════════════════════════════ *@
 @section Scripts {
     <script src="~/lib/microsoft/signalr/dist/browser/signalr.min.js"></script>
     <script>
@@ -828,7 +791,6 @@
         let remainingSeconds = 600;
         const TOTAL_SECONDS  = 600;
 
-        // ── SignalR ──────────────────────────────────────────────
         const connection = new signalR.HubConnectionBuilder()
             .withUrl("/seatHub")
             .withAutomaticReconnect()
@@ -843,7 +805,18 @@
             .then(() => connection.invoke("JoinScheduleGroup", scheduleId, currentUserId))
             .catch(err => console.error("SignalR:", err));
 
-        // ── Seat Click ───────────────────────────────────────────
+        const crudConnection = new signalR.HubConnectionBuilder()
+            .withUrl("/seatCrudHub")
+            .withAutomaticReconnect()
+            .build();
+
+        crudConnection.on("SeatChanged", function (action, seatId) {
+            console.log(`Seat CRUD ${action}: ${seatId}`);
+            location.reload();
+        });
+
+        crudConnection.start().catch(err => console.error("SeatCrudHub:", err));
+
         function handleSeatClick(seatId) {
             const btn    = document.getElementById(`seat-${seatId}`);
             const status = btn.dataset.status.toLowerCase();
@@ -861,7 +834,6 @@
             }
         }
 
-        // ── AJAX: Hold ───────────────────────────────────────────
         async function holdSeat(seatId) {
             const token = document.querySelector('input[name="__RequestVerificationToken"]')?.value ?? "";
             const res   = await fetch(`/Booking/SeatMap?handler=Hold&seatId=${seatId}&scheduleId=${scheduleId}`, {
@@ -880,7 +852,6 @@
             }
         }
 
-        // ── AJAX: Release ────────────────────────────────────────
         async function releaseSeat(seatId) {
             const token = document.querySelector('input[name="__RequestVerificationToken"]')?.value ?? "";
             await fetch(`/Booking/SeatMap?handler=Release&seatId=${seatId}&scheduleId=${scheduleId}`, {
@@ -893,7 +864,6 @@
             if (heldSeats.size === 0) stopCountdown();
         }
 
-        // ── UI Helpers ───────────────────────────────────────────
         function updateSeatButton(seatId, status) {
             const btn = document.getElementById(`seat-${seatId}`);
             if (!btn) return;
@@ -937,7 +907,6 @@
             }
         }
 
-        // ── Countdown ────────────────────────────────────────────
         function startCountdown() {
             remainingSeconds = TOTAL_SECONDS;
             const bar = document.getElementById("countdown-bar");
@@ -950,7 +919,6 @@
                 const pct = (remainingSeconds / TOTAL_SECONDS * 100).toFixed(1);
                 document.getElementById("countdown-progress").style.width = `${pct}%`;
 
-                // Turn bar red when < 2 min
                 if (remainingSeconds <= 120) {
                     bar.style.background = "linear-gradient(135deg, #7F1D1D, #DC2626)";
                 }
@@ -973,12 +941,10 @@
             bar.style.background = "";
         }
 
-        // ── Checkout ─────────────────────────────────────────────
         function markCheckout() {
             connection.invoke("MarkInCheckout").catch(err => console.error(err));
         }
 
-        // ── Toast ────────────────────────────────────────────────
         function showToast(message, type = "info") {
             const typeMap = {
                 success: { bg: "#10B981", icon: "✓" },
@@ -995,7 +961,6 @@
             bootstrap.Toast.getOrCreateInstance(toast, { delay: 3000 }).show();
         }
 
-        // Initialize
         updateSummary();
         if (heldSeats.size > 0) startCountdown();
     </script>

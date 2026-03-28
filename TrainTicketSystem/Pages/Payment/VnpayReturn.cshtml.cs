@@ -9,48 +9,41 @@ using TrainTicketSystem.Services;
 
 namespace TrainTicketSystem.Pages.Payment;
 
-/// <summary>
-/// Handles the VNPay IPN/Return callback after payment.
-/// VNPay redirects the user browser to this page with result query params.
-/// </summary>
 public class VnpayReturnModel : PageModel
 {
     private readonly TrainTicketDbContext _context;
     private readonly ISeatService _seatService;
     private readonly VnpayService _vnpay;
     private readonly IHubContext<BookingNotificationHub> _notificationHub;
+    private readonly IHubContext<TicketHub> _ticketHub;
 
     public VnpayReturnModel(
         TrainTicketDbContext context,
         ISeatService seatService,
         VnpayService vnpay,
-        IHubContext<BookingNotificationHub> notificationHub)
+        IHubContext<BookingNotificationHub> notificationHub,
+        IHubContext<TicketHub> ticketHub)
     {
         _context = context;
         _seatService = seatService;
         _vnpay = vnpay;
         _notificationHub = notificationHub;
+        _ticketHub = ticketHub;
     }
 
-    // ------------------------------------------------------------------ //
-    //  GET: /Payment/VnpayReturn?vnp_ResponseCode=00&...                  //
-    // ------------------------------------------------------------------ //
     public async Task<IActionResult> OnGetAsync()
     {
-        // 1. Verify HMAC-SHA512 signature — reject tampered responses
         if (!_vnpay.IsValidSignature(Request))
             return RedirectToPage("/Payment/Fail", new { reason = "invalid_signature" });
 
         var responseCode = Request.Query["vnp_ResponseCode"].ToString();
-        var txnRef       = Request.Query["vnp_TxnRef"].ToString();          // "bookingId_timestamp"
+        var txnRef       = Request.Query["vnp_TxnRef"].ToString();
         var transactionId = Request.Query["vnp_TransactionNo"].ToString();
         var orderInfo    = Request.Query["vnp_OrderInfo"].ToString();
 
-        // 2. Parse bookingId from TxnRef ("bookingId_timestamp")
         if (!int.TryParse(txnRef.Split('_')[0], out int bookingId))
             return RedirectToPage("/Payment/Fail", new { reason = "invalid_txn" });
 
-        // 3. Load booking
         var booking = await _context.Bookings
             .Include(b => b.BookingDetails)
             .FirstOrDefaultAsync(b => b.BookingId == bookingId);
@@ -58,17 +51,14 @@ public class VnpayReturnModel : PageModel
         if (booking == null)
             return RedirectToPage("/Payment/Fail", new { reason = "not_found" });
 
-        // 4. Idempotency guard — already processed
         if (booking.Status == "Paid")
             return RedirectToPage("/Payment/Success", new { bookingId });
 
-        // 5. Load the pending payment record
         var payment = await _context.Payments
             .FirstOrDefaultAsync(p => p.BookingId == bookingId && p.Status == "Pending");
 
-        if (responseCode == "00")  // "00" = success in VNPay
+        if (responseCode == "00")
         {
-            // ✅ Payment success
             booking.Status = "Paid";
 
             if (payment != null)
@@ -79,16 +69,14 @@ public class VnpayReturnModel : PageModel
                 payment.VnpayOrderInfo      = orderInfo;
             }
 
-            // Confirm seats as booked (releases SeatHold records)
             var seatIds = booking.BookingDetails.Select(d => d.SeatId!.Value).ToList();
             await _seatService.ConfirmBookingAsync(seatIds, booking.ScheduleId!.Value);
 
             await _context.SaveChangesAsync();
 
-            // ---- Send real-time notification to admin dashboard ----
+            await _ticketHub.Clients.Group("tickets").SendAsync("TicketChanged", "paid", booking.BookingId);
             await SendBookingNotificationAsync(booking);
 
-            // Clear session
             HttpContext.Session.Remove("SelectedSeats");
             HttpContext.Session.Remove("PendingBookingId");
             HttpContext.Session.Remove("PendingPaymentId");
@@ -98,7 +86,6 @@ public class VnpayReturnModel : PageModel
         }
         else
         {
-            // ❌ Payment failed or cancelled
             booking.Status = "Cancelled";
 
             if (payment != null)
@@ -107,7 +94,6 @@ public class VnpayReturnModel : PageModel
                 payment.VnpayTransactionId = transactionId;
             }
 
-            // Release held seats back to available
             var seatIds = booking.BookingDetails.Select(d => d.SeatId!.Value).ToList();
             var userId  = HttpContext.Session.GetInt32("UserId") ?? booking.UserId ?? 0;
             foreach (var seatId in seatIds)
@@ -115,19 +101,16 @@ public class VnpayReturnModel : PageModel
 
             await _context.SaveChangesAsync();
 
+            await _ticketHub.Clients.Group("tickets").SendAsync("TicketChanged", "cancelled", booking.BookingId);
+
             return RedirectToPage("/Payment/Fail", new { bookingId, code = responseCode });
         }
     }
 
-    /// <summary>
-    /// Loads booking details (customer name, route) and pushes a notification
-    /// to all admin clients via SignalR.
-    /// </summary>
     private async Task SendBookingNotificationAsync(BookingModel booking)
     {
         try
         {
-            // Reload with navigation properties for notification content
             var fullBooking = await _context.Bookings
                 .Include(b => b.User)
                 .Include(b => b.Schedule).ThenInclude(s => s!.Route)
@@ -155,7 +138,6 @@ public class VnpayReturnModel : PageModel
         }
         catch
         {
-            // Notification failure should never break the payment flow
         }
     }
 }

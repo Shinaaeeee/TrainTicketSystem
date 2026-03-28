@@ -114,10 +114,42 @@
         </tbody>
     </table>
 
-    <div class="px-6 py-4 border-t border-slate-200 bg-white">
+    <div class="px-6 py-4 border-t border-slate-200 bg-white flex items-center justify-between">
         <p class="text-sm text-slate-600">
-            Showing <span class="font-semibold">@Model.Bookings.Count</span> booking(s)
+            Hiển thị <span class="font-semibold">@Model.Bookings.Count</span> trên tổng số <span class="font-semibold">@Model.TotalItems</span> booking
         </p>
+
+        @if (Model.TotalPages > 1)
+        {
+            <div class="flex gap-1">
+                @* Nút Previous *@
+                @if (Model.PageIndex > 1)
+                {
+                    <a href="?PageIndex=@(Model.PageIndex - 1)&SearchName=@Model.SearchName&StatusFilter=@Model.StatusFilter"
+                       class="px-3 py-1 border border-slate-300 rounded text-slate-600 hover:bg-slate-50 text-sm transition-colors">
+                        Trước
+                    </a>
+                }
+
+                @* Vòng lặp in số trang *@
+                @for (int i = 1; i <= Model.TotalPages; i++)
+                {
+                    <a href="?PageIndex=@i&SearchName=@Model.SearchName&StatusFilter=@Model.StatusFilter"
+                       class="px-3 py-1 border rounded text-sm transition-colors @(i == Model.PageIndex ? "bg-slate-800 text-white border-slate-800" : "border-slate-300 text-slate-600 hover:bg-slate-50")">
+                        @i
+                    </a>
+                }
+
+                @* Nút Next *@
+                @if (Model.PageIndex < Model.TotalPages)
+                {
+                    <a href="?PageIndex=@(Model.PageIndex + 1)&SearchName=@Model.SearchName&StatusFilter=@Model.StatusFilter"
+                       class="px-3 py-1 border border-slate-300 rounded text-slate-600 hover:bg-slate-50 text-sm transition-colors">
+                        Sau
+                    </a>
+                }
+            </div>
+        }
     </div>
 </div>
 
@@ -188,4 +220,21 @@
         lucide.createIcons();
         openModal('confirmModal');
     }
+</script>
+
+<script src="~/lib/microsoft/signalr/dist/browser/signalr.min.js"></script>
+<script>
+    const connection = new signalR.HubConnectionBuilder()
+        .withUrl("/ticketHub")
+        .withAutomaticReconnect()
+        .build();
+
+    connection.on("TicketChanged", function (action, bookingId) {
+        console.log(`Ticket ${action}: ${bookingId}`);
+        location.reload();
+    });
+
+    connection.start().catch(function (err) {
+        console.error("SignalR connection error: ", err.toString());
+    });
 </script>

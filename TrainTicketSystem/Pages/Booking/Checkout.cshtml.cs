@@ -1,6 +1,8 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
+using TrainTicketSystem.Hubs;
 using TrainTicketSystem.Models;
 using TrainTicketSystem.Services;
 using PaymentModel = TrainTicketSystem.Models.Payment;
@@ -11,27 +13,24 @@ public class CheckoutModel : PageModel
 {
     private readonly TrainTicketDbContext _context;
     private readonly VnpayService _vnpay;
+    private readonly IHubContext<TicketHub> _ticketHub;
     private readonly decimal _defaultBasePrice;
 
-    public CheckoutModel(TrainTicketDbContext context, VnpayService vnpay, IConfiguration config)
+    public CheckoutModel(TrainTicketDbContext context, VnpayService vnpay, IConfiguration config, IHubContext<TicketHub> ticketHub)
     {
         _context = context;
         _vnpay = vnpay;
+        _ticketHub = ticketHub;
         _defaultBasePrice = config.GetValue<decimal>("Booking:DefaultBasePrice", 100_000m);
     }
 
-    // ---- Display data ----
     public Schedule? Schedule { get; set; }
     public List<SeatCheckoutItem> SeatItems { get; set; } = [];
     public decimal TotalPrice { get; set; }
 
-    // ---- Bound form data ----
     [BindProperty] public int ScheduleId { get; set; }
     [BindProperty] public List<PassengerInput> Passengers { get; set; } = [];
 
-    // ------------------------------------------------------------------ //
-    //  GET: /Booking/Checkout?scheduleId=1                                //
-    // ------------------------------------------------------------------ //
     public async Task<IActionResult> OnGetAsync(int scheduleId)
     {
         var userId = HttpContext.Session.GetInt32("UserId");
@@ -51,13 +50,12 @@ public class CheckoutModel : PageModel
 
         var seatIds = seatsRaw.Split(',').Select(int.Parse).ToList();
 
-        // Load raw data first, compute price in C# (not in LINQ-to-SQL) to avoid decimal precision issues
         var rawSeats = await _context.Seats
             .Include(s => s.SeatType)
             .Where(s => seatIds.Contains(s.SeatId))
             .ToListAsync();
 
-        decimal basePrice = Schedule?.Price ?? _defaultBasePrice; // lấy giá base từ Schedule
+        decimal basePrice = Schedule?.Price ?? _defaultBasePrice;
         SeatItems = rawSeats.Select(s => new SeatCheckoutItem
         {
             SeatId     = s.SeatId,
@@ -68,15 +66,11 @@ public class CheckoutModel : PageModel
 
         TotalPrice = SeatItems.Sum(x => x.Price);
 
-        // Pre-fill passenger list slots from session
         Passengers = SeatItems.Select(s => new PassengerInput { SeatId = s.SeatId }).ToList();
 
         return Page();
     }
 
-    // ------------------------------------------------------------------ //
-    //  POST: Create booking → redirect to VNPay sandbox                  //
-    // ------------------------------------------------------------------ //
     public async Task<IActionResult> OnPostPayAsync()
     {
         var userId = HttpContext.Session.GetInt32("UserId");
@@ -88,7 +82,6 @@ public class CheckoutModel : PageModel
             return Page();
         }
 
-        // 1. Calculate total
         var seatIds = Passengers.Select(p => p.SeatId).ToList();
         var seats = await _context.Seats
             .Include(s => s.SeatType)
@@ -99,7 +92,6 @@ public class CheckoutModel : PageModel
         decimal basePrice = schedule?.Price ?? _defaultBasePrice;
         decimal total = seats.Sum(s => basePrice * (s.SeatType?.PriceMultiplier ?? 1m));
 
-        // 2. Create Booking with Pending status
         var booking = new Models.Booking
         {
             UserId      = userId,
@@ -109,9 +101,8 @@ public class CheckoutModel : PageModel
             Status      = "Pending"
         };
         _context.Bookings.Add(booking);
-        await _context.SaveChangesAsync();  // need BookingId before details
+        await _context.SaveChangesAsync();
 
-        // 3. Create BookingDetails (one per passenger/seat)
         foreach (var passenger in Passengers)
         {
             var seat = seats.FirstOrDefault(s => s.SeatId == passenger.SeatId);
@@ -127,7 +118,6 @@ public class CheckoutModel : PageModel
             });
         }
 
-        // 4. Create Payment record (Pending)
         var payment = new PaymentModel
         {
             BookingId     = booking.BookingId,
@@ -139,11 +129,11 @@ public class CheckoutModel : PageModel
         _context.Payments.Add(payment);
         await _context.SaveChangesAsync();
 
-        // 5. Store bookingId in session for callback retrieval
+        await _ticketHub.Clients.Group("tickets").SendAsync("TicketChanged", "create", booking.BookingId);
+
         HttpContext.Session.SetInt32("PendingBookingId", booking.BookingId);
         HttpContext.Session.SetInt32("PendingPaymentId", payment.PaymentId);
 
-        // 6. Build VNPay URL and redirect
         var ipAddress = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "127.0.0.1";
         var paymentUrl = _vnpay.BuildPaymentUrl(
             booking.BookingId,
@@ -155,9 +145,6 @@ public class CheckoutModel : PageModel
         return Redirect(paymentUrl);
     }
 
-    // ------------------------------------------------------------------ //
-    //  Helpers                                                            //
-    // ------------------------------------------------------------------ //
     private async Task LoadScheduleAndSeats()
     {
         Schedule = await _context.Schedules
@@ -166,7 +153,7 @@ public class CheckoutModel : PageModel
             .FirstOrDefaultAsync(s => s.ScheduleId == ScheduleId);
 
         var seatIds = Passengers.Select(p => p.SeatId).ToList();
-        decimal basePrice = Schedule?.Price ?? _defaultBasePrice; // lấy giá base từ Schedule
+        decimal basePrice = Schedule?.Price ?? _defaultBasePrice;
         var rawSeats = await _context.Seats
             .Include(s => s.SeatType)
             .Where(s => seatIds.Contains(s.SeatId))
@@ -184,7 +171,6 @@ public class CheckoutModel : PageModel
     }
 }
 
-// ---- DTOs / ViewModels ----
 public class SeatCheckoutItem
 {
     public int SeatId { get; set; }

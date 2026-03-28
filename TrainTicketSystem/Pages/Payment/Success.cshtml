@@ -8,7 +8,6 @@
 <div class="result-wrapper">
 
     <div class="result-card success-card">
-        <!-- Animated checkmark -->
         <div class="result-icon">
             <svg viewBox="0 0 52 52" class="checkmark">
                 <circle class="checkmark-circle" cx="26" cy="26" r="25" fill="none"/>
@@ -21,12 +20,10 @@
 
         @if (Model.Booking != null)
         {
-            <!-- Booking ID badge -->
             <div class="booking-id-badge">
                 Mã đặt vé: <strong>#@Model.Booking.BookingId</strong>
             </div>
 
-            <!-- Trip summary -->
             <div class="ticket-summary">
                 <div class="ticket-row">
                     <span class="ticket-label">🚂 Tàu</span>
@@ -42,7 +39,6 @@
                 </div>
             </div>
 
-            <!-- Seat & passenger list -->
             @if (Model.Details.Any())
             {
                 <div class="seat-list">
@@ -64,7 +60,6 @@
                 </div>
             }
 
-            <!-- Total & payment method -->
             <div class="payment-total">
                 <span>Tổng đã thanh toán</span>
                 <strong>@Model.Booking.TotalPrice?.ToString("N0") VNĐ</strong>
@@ -83,7 +78,6 @@
 
         <div class="result-actions">
             <a href="/" class="btn-home">🏠 Về trang chủ</a>
-            <!-- <a href="/Schedules" class="btn-book-more">🚂 Đặt thêm vé</a> -->
         </div>
     </div>
 </div>
@@ -106,7 +100,6 @@
         text-align: center;
         box-shadow: 0 20px 60px rgba(0,0,0,.1);
     }
-    /* Animated checkmark */
     .result-icon { margin-bottom: 1.5rem; }
     .checkmark { width: 80px; height: 80px; border-radius: 50%; display: block; margin: 0 auto; }
     .checkmark-circle {

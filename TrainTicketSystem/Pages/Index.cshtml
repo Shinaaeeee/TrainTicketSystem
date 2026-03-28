@@ -490,3 +490,20 @@
         .hp-hero-title { font-size: 1.4rem; }
     }
 </style>
+
+<script src="~/lib/microsoft/signalr/dist/browser/signalr.min.js"></script>
+<script>
+    const connection = new signalR.HubConnectionBuilder()
+        .withUrl("/scheduleHub")
+        .withAutomaticReconnect()
+        .build();
+
+    connection.on("ScheduleChanged", function (action, scheduleId) {
+        console.log(`Schedule ${action}: ${scheduleId}`);
+        location.reload();
+    });
+
+    connection.start().catch(function (err) {
+        console.error("SignalR connection error: ", err.toString());
+    });
+</script>
