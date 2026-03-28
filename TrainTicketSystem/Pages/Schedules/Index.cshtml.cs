@@ -20,46 +20,46 @@ namespace TrainTicketSystem.Pages.Schedules
         [BindProperty]
         public Models.Schedule CurrentSchedule { get; set; } = default!;
 
-        // 2 Biến này dùng để đổ dữ liệu vào Dropdown (Select list) cho Modal
         public SelectList TrainOptions { get; set; } = default!;
         public SelectList RouteOptions { get; set; } = default!;
 
         [BindProperty(SupportsGet = true)]
         public string? SearchTerm { get; set; }
 
-        // ==============================================
-        // CÁC BIẾN PHỤC VỤ PHÂN TRANG
-        // ==============================================
         [BindProperty(Name = "p", SupportsGet = true)]
         public int CurrentPage { get; set; } = 1;
         public int TotalPages { get; set; }
         public int TotalItems { get; set; }
         public int PageSize { get; set; } = 5;
 
+        // Hàm hỗ trợ load dữ liệu cho Dropdown để tái sử dụng
+        private async Task LoadDropdownDataAsync()
+        {
+            var trains = await _context.Trains.ToListAsync();
+            TrainOptions = new SelectList(trains, "TrainId", "TrainName");
+
+            var routes = await _context.Routes.ToListAsync();
+            var routeDisplayList = routes.Select(r => new
+            {
+                RouteId = r.RouteId,
+                Display = $"{r.StartStation} - {r.EndStation}"
+            }).ToList();
+            RouteOptions = new SelectList(routeDisplayList, "RouteId", "Display");
+        }
+
         public async Task OnGetAsync()
         {
             if (_context.Schedules != null)
             {
-                // 1. Load danh sách Tàu và Tuyến đường cho Dropdown List
-                var trains = await _context.Trains.ToListAsync();
-                TrainOptions = new SelectList(trains, "TrainId", "TrainName");
+                // 1. Load danh sách Tàu và Tuyến đường
+                await LoadDropdownDataAsync();
 
-                var routes = await _context.Routes.ToListAsync();
-                // Ghép nối Ga đi - Ga đến cho dễ nhìn
-                var routeDisplayList = routes.Select(r => new
-                {
-                    RouteId = r.RouteId,
-                    Display = $"{r.StartStation} - {r.EndStation}"
-                }).ToList();
-                RouteOptions = new SelectList(routeDisplayList, "RouteId", "Display");
-
-                // 2. Load danh sách Lịch trình, JOIN (Include) với bảng Train và Route
+                // 2. Load danh sách Lịch trình
                 var query = _context.Schedules
                     .Include(s => s.Train)
                     .Include(s => s.Route)
                     .AsQueryable();
 
-                // Lọc theo Tên tàu hoặc Ga đi/đến
                 if (!string.IsNullOrEmpty(SearchTerm))
                 {
                     query = query.Where(s =>
@@ -69,7 +69,6 @@ namespace TrainTicketSystem.Pages.Schedules
                     );
                 }
 
-                // Tính toán phân trang
                 TotalItems = await query.CountAsync();
                 TotalPages = (int)Math.Ceiling(TotalItems / (double)PageSize);
 
@@ -79,7 +78,7 @@ namespace TrainTicketSystem.Pages.Schedules
                 if (TotalItems > 0)
                 {
                     ScheduleList = await query
-                        .OrderByDescending(s => s.DepartureTime) // Sắp xếp chuyến mới nhất lên đầu
+                        .OrderByDescending(s => s.DepartureTime)
                         .Skip((CurrentPage - 1) * PageSize)
                         .Take(PageSize)
                         .ToListAsync();
@@ -93,7 +92,26 @@ namespace TrainTicketSystem.Pages.Schedules
 
         public async Task<IActionResult> OnPostCreateAsync()
         {
-            if (!ModelState.IsValid) return Page();
+            // Validate: Thời gian khởi hành phải từ hiện tại trở đi
+            if (CurrentSchedule.DepartureTime < DateTime.Now)
+            {
+                ModelState.AddModelError("CurrentSchedule.DepartureTime", "Thời gian khởi hành không được trong quá khứ.");
+            }
+
+            // Validate: Thời gian đến phải sau thời gian đi
+            if (CurrentSchedule.ArrivalTime <= CurrentSchedule.DepartureTime)
+            {
+                ModelState.AddModelError("CurrentSchedule.ArrivalTime", "Thời gian đến phải lớn hơn thời gian khởi hành.");
+            }
+
+            if (!ModelState.IsValid)
+            {
+                // Phải load lại dropdown nếu không sẽ bị lỗi Null
+                await LoadDropdownDataAsync();
+                // Kích hoạt biến để tự động mở lại modal báo lỗi
+                ViewData["ShowCreateModal"] = true;
+                return Page();
+            }
 
             _context.Schedules.Add(CurrentSchedule);
             await _context.SaveChangesAsync();
@@ -102,7 +120,11 @@ namespace TrainTicketSystem.Pages.Schedules
 
         public async Task<IActionResult> OnPostEditAsync()
         {
-            if (!ModelState.IsValid) return Page();
+            if (!ModelState.IsValid)
+            {
+                await LoadDropdownDataAsync();
+                return Page();
+            }
 
             _context.Attach(CurrentSchedule).State = EntityState.Modified;
             await _context.SaveChangesAsync();
