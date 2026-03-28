@@ -17,22 +17,16 @@ public class SeatMapModel : PageModel
         _seatService = seatService;
     }
 
-    // ---- Page Properties ----
     public Schedule? Schedule { get; set; }
     public List<SeatDto> Seats { get; set; } = [];
     public int CurrentUserId { get; set; }
 
-    // ---- Bound Properties ----
     [BindProperty] public int SeatId { get; set; }
     [BindProperty] public int ScheduleId { get; set; }
     [BindProperty] public List<int> SelectedSeatIds { get; set; } = [];
 
-    // ------------------------------------------------------------------ //
-    //  GET: /Booking/SeatMap?scheduleId=1                                 //
-    // ------------------------------------------------------------------ //
     public async Task<IActionResult> OnGetAsync(int scheduleId)
     {
-        // Auth check
         var userId = HttpContext.Session.GetInt32("UserId");
         if (userId == null) return RedirectToPage("/Login");
 
@@ -51,9 +45,6 @@ public class SeatMapModel : PageModel
         return Page();
     }
 
-    // ------------------------------------------------------------------ //
-    //  POST: Hold a seat (called via AJAX)                                //
-    // ------------------------------------------------------------------ //
     public async Task<IActionResult> OnPostHoldAsync(int seatId, int scheduleId)
     {
         var userId = HttpContext.Session.GetInt32("UserId");
@@ -68,9 +59,6 @@ public class SeatMapModel : PageModel
         });
     }
 
-    // ------------------------------------------------------------------ //
-    //  POST: Release a seat (called via AJAX)                             //
-    // ------------------------------------------------------------------ //
     public async Task<IActionResult> OnPostReleaseAsync(int seatId, int scheduleId)
     {
         var userId = HttpContext.Session.GetInt32("UserId");
@@ -80,9 +68,6 @@ public class SeatMapModel : PageModel
         return new JsonResult(new { success = true });
     }
 
-    // ------------------------------------------------------------------ //
-    //  POST: Proceed to checkout with selected seats                      //
-    // ------------------------------------------------------------------ //
     public async Task<IActionResult> OnPostCheckoutAsync(List<int> selectedSeatIds, int scheduleId)
     {
         var userId = HttpContext.Session.GetInt32("UserId");
@@ -100,7 +85,6 @@ public class SeatMapModel : PageModel
             return RedirectToPage(new { scheduleId });
         }
 
-        // Store selected seats in session for checkout page
         HttpContext.Session.SetString("SelectedSeats", string.Join(",", selectedSeatIds));
         HttpContext.Session.SetInt32("CheckoutScheduleId", scheduleId);
 

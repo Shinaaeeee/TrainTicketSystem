@@ -1,7 +1,9 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
+using TrainTicketSystem.Hubs;
 using TrainTicketSystem.Models;
 
 namespace TrainTicketSystem.Pages.Seats;
@@ -9,10 +11,12 @@ namespace TrainTicketSystem.Pages.Seats;
 public class Index : PageModel
 {
     private readonly TrainTicketDbContext _context;
+    private readonly IHubContext<SeatCrudHub> _hubContext;
 
-    public Index(TrainTicketDbContext context)
+    public Index(TrainTicketDbContext context, IHubContext<SeatCrudHub> hubContext)
     {
         _context = context;
+        _hubContext = hubContext;
     }
 
     // ── Hiển thị danh sách ──────────────────────────────────────────
@@ -53,8 +57,10 @@ public class Index : PageModel
             .Select(s => new SeatViewModel
             {
                 SeatId = s.SeatId,
+                TrainId = s.TrainId ?? 0,
                 TrainName = s.Train!.TrainName ?? "N/A",
                 SeatNumber = s.SeatNumber ?? "",
+                SeatTypeId = s.SeatTypeId ?? 0,
                 TypeName = s.SeatType!.TypeName ?? "N/A",
                 PriceMultiplier = s.SeatType!.PriceMultiplier ?? 0
             })
@@ -80,6 +86,8 @@ public class Index : PageModel
 
         _context.Seats.Add(seat);
         await _context.SaveChangesAsync();
+
+        await _hubContext.Clients.Group("seats").SendAsync("SeatChanged", "create", seat.SeatId);
 
         TempData["SuccessMessage"] = $"Seat \"{seat.SeatNumber}\" created successfully.";
         return RedirectToPage();
@@ -109,6 +117,8 @@ public class Index : PageModel
 
         await _context.SaveChangesAsync();
 
+        await _hubContext.Clients.Group("seats").SendAsync("SeatChanged", "edit", seat.SeatId);
+
         TempData["SuccessMessage"] = $"Seat \"{seat.SeatNumber}\" updated successfully.";
         return RedirectToPage();
     }
@@ -127,6 +137,8 @@ public class Index : PageModel
 
         _context.Seats.Remove(seat);
         await _context.SaveChangesAsync();
+
+        await _hubContext.Clients.Group("seats").SendAsync("SeatChanged", "delete", id);
 
         TempData["SuccessMessage"] = "Seat deleted successfully.";
         return RedirectToPage();
@@ -157,8 +169,10 @@ public class Index : PageModel
 public class SeatViewModel
 {
     public int SeatId { get; set; }
+    public int TrainId { get; set; }
     public string TrainName { get; set; } = string.Empty;
     public string SeatNumber { get; set; } = string.Empty;
+    public int SeatTypeId { get; set; }
     public string TypeName { get; set; } = string.Empty;
     public decimal PriceMultiplier { get; set; }
 }
