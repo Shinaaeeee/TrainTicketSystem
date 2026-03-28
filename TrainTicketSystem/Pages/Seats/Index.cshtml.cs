@@ -27,6 +27,12 @@ public class Index : PageModel
     [BindProperty(SupportsGet = true)]
     public int? FilterSeatTypeId { get; set; }
 
+    // --- THÊM CODE PHÂN TRANG Ở ĐÂY ---
+    [BindProperty(SupportsGet = true)]
+    public int PageIndex { get; set; } = 1;
+    public int TotalPages { get; set; }
+    public int TotalItems { get; set; }
+
     // ── Form data cho Create / Edit modal ───────────────────────────
     // [BindProperty] cho phép Razor Pages tự map form fields vào object này
     // khi có POST request, không cần đọc từng field thủ công.
@@ -38,18 +44,30 @@ public class Index : PageModel
     {
         await PopulateDropdownsAsync();
 
+        int pageSize = 10; // Số lượng ghế trên mỗi trang (bạn có thể tuỳ chỉnh)
+        if (PageIndex < 1) PageIndex = 1;
+
         var query = _context.Seats
             .Include(s => s.Train)
             .Include(s => s.SeatType)
             .AsQueryable();
 
+        // 1. Áp dụng các bộ lọc (nếu có)
         if (FilterTrainId.HasValue)
             query = query.Where(s => s.TrainId == FilterTrainId.Value);
 
         if (FilterSeatTypeId.HasValue)
             query = query.Where(s => s.SeatTypeId == FilterSeatTypeId.Value);
 
+        // 2. Đếm tổng số bản ghi thoả mãn điều kiện lọc để tính số trang
+        TotalItems = await query.CountAsync();
+        TotalPages = (int)Math.Ceiling(TotalItems / (double)pageSize);
+
+        // 3. Phân trang và lấy dữ liệu
         Seats = await query
+            .OrderBy(s => s.SeatId)
+            .Skip((PageIndex - 1) * pageSize)
+            .Take(pageSize)
             .Select(s => new SeatViewModel
             {
                 SeatId = s.SeatId,
@@ -58,7 +76,6 @@ public class Index : PageModel
                 TypeName = s.SeatType!.TypeName ?? "N/A",
                 PriceMultiplier = s.SeatType!.PriceMultiplier ?? 0
             })
-            .OrderBy(s => s.SeatId)
             .ToListAsync();
     }
 

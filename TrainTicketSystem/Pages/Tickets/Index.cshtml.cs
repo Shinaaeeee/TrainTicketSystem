@@ -22,22 +22,41 @@ namespace TrainTicketSystem.Pages.Tickets
 
         [BindProperty(SupportsGet = true)]
         public string? SearchName { get; set; }
+        // --- THÊM CODE PHÂN TRANG Ở ĐÂY ---
+        [BindProperty(SupportsGet = true)]
+        public int PageIndex { get; set; } = 1;
+        public int TotalPages { get; set; }
+        public int TotalItems { get; set; }
 
         public async Task OnGetAsync()
         {
-            var connStr = _config.GetConnectionString("MyCnn");
+            int pageSize = 5; // Số lượng booking trên mỗi trang (bạn có thể đổi)
+            if (PageIndex < 1) PageIndex = 1;
 
+            var connStr = _config.GetConnectionString("MyCnn");
+            using var conn = new SqlConnection(connStr);
+            await conn.OpenAsync();
+
+            // 1. ĐẾM TỔNG SỐ BẢN GHI ĐỂ TÍNH SỐ TRANG
+            var countSql = @"
+                SELECT COUNT(*) 
+                FROM Booking b
+                JOIN Users u ON b.UserId = u.UserId
+                WHERE (@Status IS NULL OR b.Status = @Status)
+                  AND (@SearchName IS NULL OR u.FullName LIKE '%' + @SearchName + '%')";
+
+            using var countCmd = new SqlCommand(countSql, conn);
+            countCmd.Parameters.AddWithValue("@Status", (object?)StatusFilter ?? DBNull.Value);
+            countCmd.Parameters.AddWithValue("@SearchName", (object?)SearchName ?? DBNull.Value);
+
+            TotalItems = (int)await countCmd.ExecuteScalarAsync();
+            TotalPages = (int)Math.Ceiling(TotalItems / (double)pageSize);
+
+            // 2. LẤY DỮ LIỆU CỦA TRANG HIỆN TẠI
             var sql = @"
                 SELECT 
-                    b.BookingId,
-                    u.FullName,
-                    r.StartStation,
-                    r.EndStation,
-                    t.TrainName,
-                    sc.DepartureTime,
-                    b.BookingDate,
-                    b.TotalPrice,
-                    b.Status
+                    b.BookingId, u.FullName, r.StartStation, r.EndStation,
+                    t.TrainName, sc.DepartureTime, b.BookingDate, b.TotalPrice, b.Status
                 FROM Booking b
                 JOIN Users u     ON b.UserId     = u.UserId
                 JOIN Schedule sc ON b.ScheduleId = sc.ScheduleId
@@ -45,15 +64,15 @@ namespace TrainTicketSystem.Pages.Tickets
                 JOIN Train t     ON sc.TrainId   = t.TrainId
                 WHERE (@Status IS NULL OR b.Status = @Status)
                   AND (@SearchName IS NULL OR u.FullName LIKE '%' + @SearchName + '%')
-                ORDER BY b.BookingDate DESC";
+                ORDER BY b.BookingDate DESC
+                OFFSET @Offset ROWS FETCH NEXT @PageSize ROWS ONLY"; 
 
-            using var conn = new SqlConnection(connStr);
             using var cmd = new SqlCommand(sql, conn);
-
             cmd.Parameters.AddWithValue("@Status", (object?)StatusFilter ?? DBNull.Value);
             cmd.Parameters.AddWithValue("@SearchName", (object?)SearchName ?? DBNull.Value);
+            cmd.Parameters.AddWithValue("@Offset", (PageIndex - 1) * pageSize);
+            cmd.Parameters.AddWithValue("@PageSize", pageSize);
 
-            await conn.OpenAsync();
             using var reader = await cmd.ExecuteReaderAsync();
 
             while (await reader.ReadAsync())
