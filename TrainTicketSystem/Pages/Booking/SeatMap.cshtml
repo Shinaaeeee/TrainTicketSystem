@@ -805,6 +805,18 @@
             .then(() => connection.invoke("JoinScheduleGroup", scheduleId, currentUserId))
             .catch(err => console.error("SignalR:", err));
 
+        const crudConnection = new signalR.HubConnectionBuilder()
+            .withUrl("/seatCrudHub")
+            .withAutomaticReconnect()
+            .build();
+
+        crudConnection.on("SeatChanged", function (action, seatId) {
+            console.log(`Seat CRUD ${action}: ${seatId}`);
+            location.reload();
+        });
+
+        crudConnection.start().catch(err => console.error("SeatCrudHub:", err));
+
         function handleSeatClick(seatId) {
             const btn    = document.getElementById(`seat-${seatId}`);
             const status = btn.dataset.status.toLowerCase();
